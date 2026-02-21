@@ -1,6 +1,6 @@
 ﻿{
 	"name": "LevelUpChoices",
-	"version_number": "1.0.2",
+	"version_number": "1.0.3",
 	"website_url": "",
 	"description": "Every level-up gives each player a choice of 3 items to pick from, with options to reroll or permanently banish items.",
 	"dependencies": [

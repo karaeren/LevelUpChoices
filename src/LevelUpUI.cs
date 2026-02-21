@@ -279,12 +279,16 @@ namespace LevelUpChoices
                 cardLe.flexibleWidth = 1;
 
                 // VLG directly on card with padding (top=10 clears the 4px border)
+                // bottom=56 reserves space for the absolutely-positioned BANISH/REROLL buttons
+                // (8px gap + 40px button height + 8px padding)
                 var vLayout = card.AddComponent<VerticalLayoutGroup>();
                 vLayout.childControlHeight = false;
                 vLayout.childControlWidth = true;
                 vLayout.childForceExpandHeight = false;
+                vLayout.childForceExpandWidth = true;
                 vLayout.spacing = 6;
-                vLayout.padding = new RectOffset(8, 8, 10, 8);
+                vLayout.padding = new RectOffset(8, 8, 10, 56);
+                card.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
                 // Tier-colored top border (absolute overlay, excluded from VLG flow)
                 var border = new GameObject("TierBorder");
@@ -350,21 +354,22 @@ namespace LevelUpChoices
                 btnSpaceLe.preferredHeight = 2;
                 btnSpaceLe.flexibleHeight = 0;
 
-                // ── Action row ───────────────────────────────────────────────────
-                var actionRow = new GameObject("ActionRow");
-                actionRow.transform.SetParent(card.transform, false);
-                var actionLayout = actionRow.AddComponent<HorizontalLayoutGroup>();
-                actionLayout.childControlWidth = true;
-                actionLayout.childControlHeight = true;
-                actionLayout.spacing = 4;
-                var actionLe = actionRow.AddComponent<LayoutElement>();
-                actionLe.minHeight = 8;
-                actionLe.preferredHeight = 8;
+                // ── BANISH / REROLL buttons ───────────────────────────────────
+                // Absolutely anchored to the card bottom, excluded from VLG flow.
+                // anchorMin/Max pins them to the card's own RectTransform edges, so
+                // their hit areas are provably bounded by the card and cannot overlap
+                // neighbours regardless of how the layout system sizes the card.
+                BuildAbsoluteButton(card.transform, "BANISH",
+                    new Vector2(0f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(8f, 8f), new Vector2(-4f, 48f),
+                    new Color(0.65f, 0.12f, 0.12f, 0.92f),
+                    () => OnBanishClicked(slotIndex));
 
-                BuildActionButton(actionRow.transform, "BANISH", new Color(0.65f, 0.12f, 0.12f, 0.92f),
-                    new Color(0.85f, 0.2f, 0.2f), () => OnBanishClicked(slotIndex));
-                BuildActionButton(actionRow.transform, "REROLL", new Color(0.1f, 0.28f, 0.6f, 0.92f),
-                    new Color(0.25f, 0.5f, 0.95f), () => OnRerollClicked(slotIndex));
+                BuildAbsoluteButton(card.transform, "REROLL",
+                    new Vector2(0.5f, 0f), new Vector2(1f, 0f),
+                    new Vector2(4f, 8f), new Vector2(-8f, 48f),
+                    new Color(0.1f, 0.28f, 0.6f, 0.92f),
+                    () => OnRerollClicked(slotIndex));
 
                 buttonObjects.Add(card);
             }
@@ -382,20 +387,35 @@ namespace LevelUpChoices
             LayoutRebuilder.ForceRebuildLayoutImmediate(containerObject.GetComponent<RectTransform>());
         }
 
-        private void BuildActionButton(Transform parent, string label, Color bgColor, Color hoverColor,
-            UnityEngine.Events.UnityAction callback)
+        // Builds a button that is excluded from the parent's layout flow and instead
+        // uses explicit anchor+offset values to position itself relative to the parent card.
+        // This guarantees the RectTransform bounds exactly match the visual bounds and can
+        // never bleed outside the card into neighbouring cards.
+        private void BuildAbsoluteButton(Transform parent, string label,
+            Vector2 anchorMin, Vector2 anchorMax,
+            Vector2 offsetMin, Vector2 offsetMax,
+            Color bgColor, UnityEngine.Events.UnityAction callback)
         {
             var go = new GameObject(label + "Btn");
             go.transform.SetParent(parent, false);
 
+            // Excluded from VLG/HLG flow; positioned purely by anchors on the parent.
+            go.AddComponent<LayoutElement>().ignoreLayout = true;
+
+            var rt = go.GetComponent<RectTransform>();
+            rt.anchorMin = anchorMin;
+            rt.anchorMax = anchorMax;
+            rt.offsetMin = offsetMin;  // (left, bottom) in pixels from anchor edge
+            rt.offsetMax = offsetMax;  // (right, top) in pixels from anchor edge
+
             var img = go.AddComponent<Image>();
             if (buttonSprite) { img.sprite = buttonSprite; img.type = Image.Type.Sliced; }
-            img.color = bgColor; // start at target color so there's no cross-fade flash on spawn
+            img.color = bgColor;
 
             var btn = go.AddComponent<Button>();
             var cols = btn.colors;
-            cols.normalColor = Color.white;  // white = no tint on top of bgColor
-            cols.highlightedColor = new Color(1f, 1f, 1f, 1f); // fade to plain white on hover
+            cols.normalColor = Color.white;
+            cols.highlightedColor = new Color(1f, 1f, 1f, 1f);
             cols.pressedColor = new Color(0.65f, 0.65f, 0.65f, 1f);
             cols.fadeDuration = 0.15f;
             btn.colors = cols;
@@ -407,6 +427,8 @@ namespace LevelUpChoices
             var r = txt.GetComponent<RectTransform>();
             r.anchorMin = Vector2.zero;
             r.anchorMax = Vector2.one;
+            r.offsetMin = Vector2.zero;
+            r.offsetMax = Vector2.zero;
         }
 
         public void Hide()
