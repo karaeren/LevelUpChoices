@@ -1,6 +1,6 @@
 # LevelUpChoices
 
-![Demo image](./demo.png)
+![Demo image](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/Thunderstore-LevelUpChoices/demo.png)
 
 This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
 
