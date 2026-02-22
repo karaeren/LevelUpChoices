@@ -14,6 +14,7 @@ namespace LevelUpChoices
 
         private void OnPrePopulateSceneServer(SceneDirector director)
         {
+            if (!ModConfig.ModEnabled.Value || !ModConfig.EnableInteractableRemoval.Value) return;
             if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories) return;
 
             var selection = ClassicStageInfo.instance.interactableCategories;

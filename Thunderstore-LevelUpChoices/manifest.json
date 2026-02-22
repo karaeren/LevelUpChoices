@@ -1,9 +1,10 @@
 ﻿{
 	"name": "LevelUpChoices",
-	"version_number": "1.0.5",
+	"version_number": "1.0.6",
 	"website_url": "https://github.com/karaeren/LevelUpChoices",
 	"description": "Every level-up gives each player a choice of 3 items to pick from, with options to reroll or permanently banish items.",
 	"dependencies": [
-		"RiskofThunder-R2API_Networking-1.0.3"
+		"RiskofThunder-R2API_Networking-1.0.3",
+		"Rune580-Risk_Of_Options-2.8.5"
 	]
 }

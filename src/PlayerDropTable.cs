@@ -62,19 +62,34 @@ namespace LevelUpChoices
             if (usedTokens > 30 && _lastCalculatedTokens >= 30) return;
             _lastCalculatedTokens = usedTokens;
 
-            // --- Two-phase lerp ---
-            // At 0:   T1=79   T2=15   T3=4    Lunar=1   Boss=1
-            // At 10:  T1=55   T2=34   T3=8    Lunar=2   Boss=1
-            // At 20:  T1=37.5 T2=37.5 T3=14.5 Lunar=6   Boss=4.5
-            // At 30+: T1=20   T2=41   T3=21   Lunar=10  Boss=8
+            // --- Two-phase lerp (early → late configurable weights) ---
             float t1to2 = Mathf.Clamp01(usedTokens / 10f);
             float t2to3 = Mathf.Clamp01((usedTokens - 10f) / 20f);
 
-            float w1 = Mathf.Lerp(79f, Mathf.Lerp(55f, 20f, t2to3), t1to2);
-            float w2 = Mathf.Lerp(15f, Mathf.Lerp(34f, 41f, t2to3), t1to2);
-            float w3 = Mathf.Lerp(4f, Mathf.Lerp(8f, 21f, t2to3), t1to2);
-            float wLunar = Mathf.Lerp(1f, Mathf.Lerp(2f, 10f, t2to3), t1to2);
-            float wBoss = Mathf.Lerp(1f, Mathf.Lerp(1f, 8f, t2to3), t1to2);
+            float earlyT1 = ModConfig.EarlyWeightTier1.Value;
+            float earlyT2 = ModConfig.EarlyWeightTier2.Value;
+            float earlyT3 = ModConfig.EarlyWeightTier3.Value;
+            float earlyLunar = ModConfig.EarlyWeightLunar.Value;
+            float earlyBoss = ModConfig.EarlyWeightBoss.Value;
+
+            float lateT1 = ModConfig.LateWeightTier1.Value;
+            float lateT2 = ModConfig.LateWeightTier2.Value;
+            float lateT3 = ModConfig.LateWeightTier3.Value;
+            float lateLunar = ModConfig.LateWeightLunar.Value;
+            float lateBoss = ModConfig.LateWeightBoss.Value;
+
+            // Mid-point is the average of early and late
+            float midT1 = (earlyT1 + lateT1) * 0.5f;
+            float midT2 = (earlyT2 + lateT2) * 0.5f;
+            float midT3 = (earlyT3 + lateT3) * 0.5f;
+            float midLunar = (earlyLunar + lateLunar) * 0.5f;
+            float midBoss = (earlyBoss + lateBoss) * 0.5f;
+
+            float w1 = Mathf.Lerp(earlyT1, Mathf.Lerp(midT1, lateT1, t2to3), t1to2);
+            float w2 = Mathf.Lerp(earlyT2, Mathf.Lerp(midT2, lateT2, t2to3), t1to2);
+            float w3 = Mathf.Lerp(earlyT3, Mathf.Lerp(midT3, lateT3, t2to3), t1to2);
+            float wLunar = Mathf.Lerp(earlyLunar, Mathf.Lerp(midLunar, lateLunar, t2to3), t1to2);
+            float wBoss = Mathf.Lerp(earlyBoss, Mathf.Lerp(midBoss, lateBoss, t2to3), t1to2);
 
             // Use cached tiers — no GetItemDef calls, no list allocation
             foreach (var kv in _tiers)

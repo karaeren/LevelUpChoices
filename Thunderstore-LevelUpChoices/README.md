@@ -6,6 +6,8 @@ This mod removes most of the normal item sources from stages — chests, shrines
 
 Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
 
+Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game.
+
 [Source Code (GitHub)](https://github.com/karaeren/LevelUpChoices/)
 
 ## How it works
@@ -34,6 +36,5 @@ Each player has fully independent state — their own item options, their own ba
 
 ## TODO
 
-- Add configs
-- Add pausing during item selection (configurable)
 - Integrate LookingGlass or something like that to make item descriptions better
+- Add pausing during item selection (configurable)

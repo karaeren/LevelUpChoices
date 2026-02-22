@@ -228,6 +228,11 @@ namespace LevelUpChoices
         {
             if (IsVisible) return;
             IsVisible = true;
+
+            // Apply configurable UI scale
+            float scale = ModConfig.UIScale.Value;
+            containerObject.GetComponent<RectTransform>().localScale = new Vector3(scale, scale, 1f);
+
             containerObject.SetActive(true);
             UpdateTokens();
             UpdateOptions(pickupIndices);
@@ -334,10 +339,13 @@ namespace LevelUpChoices
                 nameTmp.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
                 // ── Description ──────────────────────────────────────────────────
-                string desc = itemDef != null ? Language.GetString(itemDef.pickupToken) : "";
-                var descTmp = MakeLabel(card.transform, desc, 18f,
-                    new Color(0.72f, 0.72f, 0.78f), TextAlignmentOptions.Center, true);
-                descTmp.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                if (ModConfig.ShowItemDescriptions.Value)
+                {
+                    string desc = itemDef != null ? Language.GetString(itemDef.pickupToken) : "";
+                    var descTmp = MakeLabel(card.transform, desc, 18f,
+                        new Color(0.72f, 0.72f, 0.78f), TextAlignmentOptions.Center, true);
+                    descTmp.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                }
 
                 // 4px extra gap above buttons
                 var btnSpace = new GameObject("BtnSpacer");
@@ -451,36 +459,28 @@ namespace LevelUpChoices
 
         public void ShowNotification()
         {
+            if (!ModConfig.EnableNotifications.Value) return;
             notificationPanel.SetActive(true);
-            notificationText.text = "LEVEL UP!\nPress F3";
-            StartCoroutine(FlashNotification());
+            UpdateNotificationText();
         }
 
-        private System.Collections.IEnumerator FlashNotification()
+        private void UpdateNotificationText()
         {
-            float duration = 3f;
-            float elapsed = 0f;
-            var bg = notificationPanel.GetComponent<Image>();
-            Color baseColor = bg.color;
-
-            while (elapsed < duration)
-            {
-                elapsed += Time.deltaTime;
-                float alpha = Mathf.PingPong(elapsed * 2f, 0.4f) + 0.48f;
-                bg.color = new Color(baseColor.r, baseColor.g, baseColor.b, alpha);
-                yield return null;
-            }
-            bg.color = baseColor;
-
-            if (LevelUpManager.Instance.AvailableTokens <= 0)
-                notificationPanel.SetActive(false);
+            int tokens = LevelUpManager.Instance.AvailableTokens;
+            string keyName = ModConfig.ToggleMenuKey.Value.MainKey.ToString();
+            string tokenWord = tokens == 1 ? "TOKEN" : "TOKENS";
+            notificationText.text = $"{tokens} UNUSED {tokenWord}\nPRESS {keyName}";
         }
 
         private void Update()
         {
-            bool showNotif = LevelUpManager.Instance.AvailableTokens > 0 && !IsVisible && !isPaused;
+            bool showNotif = ModConfig.EnableNotifications.Value
+                && LevelUpManager.Instance.AvailableTokens > 0
+                && !IsVisible && !isPaused;
             if (notificationPanel.activeSelf != showNotif)
                 notificationPanel.SetActive(showNotif);
+            if (showNotif)
+                UpdateNotificationText();
         }
 
         // ─── Event handlers ───────────────────────────────────────────────────────

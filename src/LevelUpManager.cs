@@ -15,8 +15,8 @@ namespace LevelUpChoices
         public class PlayerState
         {
             public int SelectionTokens = 0;
-            public int BanishTokens = 1;
-            public int RerollTokens = 1;
+            public int BanishTokens = ModConfig.StartingBanishTokens.Value;
+            public int RerollTokens = ModConfig.StartingRerollTokens.Value;
             public int UsedTokens = 0;
             public List<ItemIndex> CurrentOptions = new List<ItemIndex>();
             public PlayerDropTable DropTable = new PlayerDropTable();
@@ -52,6 +52,7 @@ namespace LevelUpChoices
         private void OnLevelUp(uint newLevel)
         {
             if (!NetworkServer.active) return;
+            if (!ModConfig.ModEnabled.Value) return;
 
             foreach (var player in PlayerCharacterMasterController.instances)
             {
@@ -67,7 +68,8 @@ namespace LevelUpChoices
                     var state = playerStates[netId];
                     state.SelectionTokens++;
 
-                    if (newLevel % 10 == 0)
+                    int levelsPerBanish = ModConfig.LevelsPerBanishToken.Value;
+                    if (levelsPerBanish > 0 && newLevel % (uint)levelsPerBanish == 0)
                     {
                         state.BanishTokens++;
                     }
@@ -163,7 +165,8 @@ namespace LevelUpChoices
             state.UsedTokens++;
             state.DropTable.RecalculateWeights(state.UsedTokens);
 
-            state.RerollTokens = 1;
+            if (ModConfig.RerollTokenRefreshOnPick.Value)
+                state.RerollTokens = 1;
 
             foreach (var pcmc in PlayerCharacterMasterController.instances)
             {
@@ -228,7 +231,8 @@ namespace LevelUpChoices
             var state = playerStates[netId];
 
             state.CurrentOptions.Clear();
-            for (int i = 0; i < 3; i++)
+            int choiceCount = Mathf.Max(1, ModConfig.ItemChoiceCount.Value);
+            for (int i = 0; i < choiceCount; i++)
             {
                 state.CurrentOptions.Add(state.DropTable.Roll(state.CurrentOptions));
             }
@@ -243,7 +247,7 @@ namespace LevelUpChoices
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.F3))
+            if (ModConfig.ToggleMenuKey.Value.IsDown())
             {
                 if (LevelUpUI.Instance)
                 {

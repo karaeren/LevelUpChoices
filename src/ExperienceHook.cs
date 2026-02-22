@@ -8,11 +8,11 @@ namespace LevelUpChoices
     {
         public static event Action<uint> OnLevelUp;
 
-        private const float StartMultiplier = 1.69f;
-        private const float GrowthRate = 1.169f;
+        private float StartMultiplier => ModConfig.ExperienceStartMultiplier.Value;
+        private float GrowthRate => ModConfig.ExperienceGrowthRate.Value;
 
         private uint cachedLevel = 0;
-        private double cachedMultiplier = StartMultiplier;
+        private double cachedMultiplier = 0;
 
         private void Awake()
         {
@@ -29,12 +29,12 @@ namespace LevelUpChoices
         private void OnRunDestroy(Run run)
         {
             cachedLevel = 0;
-            cachedMultiplier = StartMultiplier;
+            cachedMultiplier = 0;
         }
 
         private void TeamManager_GiveTeamExperience(On.RoR2.TeamManager.orig_GiveTeamExperience orig, TeamManager self, TeamIndex teamIndex, ulong experience)
         {
-            if (teamIndex != TeamIndex.Player)
+            if (teamIndex != TeamIndex.Player || !ModConfig.ModEnabled.Value)
             {
                 orig(self, teamIndex, experience);
                 return;

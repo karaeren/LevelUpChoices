@@ -6,17 +6,21 @@ using UnityEngine;
 namespace LevelUpChoices
 {
     [BepInDependency(NetworkingAPI.PluginGUID)]
+    [BepInDependency("com.rune580.riskofoptions", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class LevelUpChoices : BaseUnityPlugin
     {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.0.5";
+        public const string PluginVersion = "1.0.6";
 
         public void Awake()
         {
             Log.Init(Logger);
+
+            // Initialize configuration and Risk Of Options UI
+            ModConfig.Init(Config, Info);
 
             // Register Network Messages
             NetworkingAPI.RegisterMessageType<Networking.SyncPlayerState>();

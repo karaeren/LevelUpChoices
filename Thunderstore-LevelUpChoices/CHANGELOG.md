@@ -1,3 +1,10 @@
+## 1.0.6
+
+- Added configuration and RiskOfOptions support. Available configurations;
+1. Shared: Toggling mod to completely disable it.
+2. Client: Changing settings such as shortcut key for the item selection UI, UI scale etc...
+3. Server: Toggling disabling of interactables, the number of item options serverd to players when they level up, the rates for the items etc...
+
 ## 1.0.5
 
 - Updated README
