@@ -1,7 +1,8 @@
 using BepInEx;
 using R2API.Networking;
 using UnityEngine;
-
+// using RoR2;
+// using UnityEngine.Networking;
 namespace LevelUpChoices
 {
     [BepInDependency(NetworkingAPI.PluginGUID)]
@@ -11,7 +12,7 @@ namespace LevelUpChoices
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.0.0";
+        public const string PluginVersion = "1.0.4";
 
         public void Awake()
         {
@@ -29,24 +30,20 @@ namespace LevelUpChoices
             DontDestroyOnLoad(logicObject);
             logicObject.AddComponent<LevelUpManager>();
             logicObject.AddComponent<LevelUpUI>();
+            logicObject.AddComponent<ExperienceHook>();
+            logicObject.AddComponent<InteractableSpawnHook>();
 
             Log.Info("LevelUpChoices initialized.");
         }
 
-        // using RoR2;
-        // using UnityEngine.Networking;
+
         // private void Update()
         // {
         //     if (Input.GetKeyDown(KeyCode.F2))
         //     {
-        //         Log.Info("F2 pressed. Forcing Level Up.");
         //         if (NetworkServer.active)
         //         {
-        //             TeamManager.instance.GiveTeamExperience(TeamIndex.Player, TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player) + 1);
-        //         }
-        //         else
-        //         {
-        //             Log.Warning("F2 pressed but not host/server. Cannot give experience.");
+        //             TeamManager.instance.GiveTeamExperience(TeamIndex.Player, (TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player)) / 6);
         //         }
         //     }
         // }

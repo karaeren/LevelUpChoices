@@ -47,5 +47,4 @@ Each player has fully independent state — their own item options, their own ba
 ## TODO
 
 - Check out wiki for item weights. Use ItemDef Tier and dynamically allocate weight for each item.
-- Too many equipment barrels spawning. Either find a way to integrate equipments into the mod or reduce their spawn chance.
 - Add configs

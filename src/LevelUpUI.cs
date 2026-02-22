@@ -215,8 +215,6 @@ namespace LevelUpChoices
             notificationPanel.SetActive(false);
         }
 
-        // ─── Public API ───────────────────────────────────────────────────────────
-
         public void UpdateTokens()
         {
             if (tokenHeader)
@@ -273,14 +271,10 @@ namespace LevelUpChoices
                 cardBtn.colors = cardBtnColors;
                 cardBtn.onClick.AddListener(() => OnItemClicked(pickupIndex));
 
-                // Equal width: override any VLG-computed preferred width
                 var cardLe = card.AddComponent<LayoutElement>();
                 cardLe.preferredWidth = 0;
                 cardLe.flexibleWidth = 1;
 
-                // VLG directly on card with padding (top=10 clears the 4px border)
-                // bottom=56 reserves space for the absolutely-positioned BANISH/REROLL buttons
-                // (8px gap + 40px button height + 8px padding)
                 var vLayout = card.AddComponent<VerticalLayoutGroup>();
                 vLayout.childControlHeight = false;
                 vLayout.childControlWidth = true;
@@ -326,7 +320,6 @@ namespace LevelUpChoices
                 if (pickupDef?.iconSprite != null) iconImg.sprite = pickupDef.iconSprite;
 
                 // ── Name ─────────────────────────────────────────────────────────
-                // 4px extra gap above name
                 var nameSpace = new GameObject("NameSpacer");
                 nameSpace.transform.SetParent(card.transform, false);
                 var nameSpaceLe = nameSpace.AddComponent<LayoutElement>();
@@ -355,20 +348,18 @@ namespace LevelUpChoices
                 btnSpaceLe.flexibleHeight = 0;
 
                 // ── BANISH / REROLL buttons ───────────────────────────────────
-                // Absolutely anchored to the card bottom, excluded from VLG flow.
-                // anchorMin/Max pins them to the card's own RectTransform edges, so
-                // their hit areas are provably bounded by the card and cannot overlap
-                // neighbours regardless of how the layout system sizes the card.
                 BuildAbsoluteButton(card.transform, "BANISH",
                     new Vector2(0f, 0f), new Vector2(0.5f, 0f),
                     new Vector2(8f, 8f), new Vector2(-4f, 48f),
-                    new Color(0.65f, 0.12f, 0.12f, 0.92f),
+                    new Color(0.50f, 0.07f, 0.07f, 0.95f),
+                    new Color(0.90f, 0.22f, 0.22f, 1f),
                     () => OnBanishClicked(slotIndex));
 
                 BuildAbsoluteButton(card.transform, "REROLL",
                     new Vector2(0.5f, 0f), new Vector2(1f, 0f),
-                    new Vector2(4f, 8f), new Vector2(-8f, 48f),
-                    new Color(0.1f, 0.28f, 0.6f, 0.92f),
+                    new Vector2( 4f,  8f), new Vector2(-8f, 48f),
+                    new Color(0.06f, 0.16f, 0.42f, 0.95f),
+                    new Color(0.28f, 0.54f, 1.00f, 1f),
                     () => OnRerollClicked(slotIndex));
 
                 buttonObjects.Add(card);
@@ -386,49 +377,58 @@ namespace LevelUpChoices
             }
             LayoutRebuilder.ForceRebuildLayoutImmediate(containerObject.GetComponent<RectTransform>());
         }
-
-        // Builds a button that is excluded from the parent's layout flow and instead
-        // uses explicit anchor+offset values to position itself relative to the parent card.
-        // This guarantees the RectTransform bounds exactly match the visual bounds and can
-        // never bleed outside the card into neighbouring cards.
+        
         private void BuildAbsoluteButton(Transform parent, string label,
             Vector2 anchorMin, Vector2 anchorMax,
             Vector2 offsetMin, Vector2 offsetMax,
-            Color bgColor, UnityEngine.Events.UnityAction callback)
+            Color bgColor, Color accentColor,
+            UnityEngine.Events.UnityAction callback)
         {
             var go = new GameObject(label + "Btn");
             go.transform.SetParent(parent, false);
-
-            // Excluded from VLG/HLG flow; positioned purely by anchors on the parent.
             go.AddComponent<LayoutElement>().ignoreLayout = true;
 
             var rt = go.GetComponent<RectTransform>();
             rt.anchorMin = anchorMin;
             rt.anchorMax = anchorMax;
-            rt.offsetMin = offsetMin;  // (left, bottom) in pixels from anchor edge
-            rt.offsetMax = offsetMax;  // (right, top) in pixels from anchor edge
+            rt.offsetMin = offsetMin;
+            rt.offsetMax = offsetMax;
 
-            var img = go.AddComponent<Image>();
-            if (buttonSprite) { img.sprite = buttonSprite; img.type = Image.Type.Sliced; }
-            img.color = bgColor;
+            // Flat background – no sprite so Button tinting is clean
+            var bg = go.AddComponent<Image>();
+            bg.color = bgColor;
 
+            // 4px accent bar pinned to the top edge
+            var accentGo = new GameObject("Accent");
+            accentGo.transform.SetParent(go.transform, false);
+            accentGo.AddComponent<LayoutElement>().ignoreLayout = true;
+            var accentRt = accentGo.GetComponent<RectTransform>();
+            accentRt.anchorMin = new Vector2(0f, 1f);
+            accentRt.anchorMax = new Vector2(1f, 1f);
+            accentRt.offsetMin = new Vector2(0f, -4f);
+            accentRt.offsetMax = new Vector2(0f,  0f);
+            accentGo.AddComponent<Image>().color = accentColor;
+
+            // Button dims bg on hover by multiplying its color
             var btn = go.AddComponent<Button>();
             var cols = btn.colors;
-            cols.normalColor = Color.white;
-            cols.highlightedColor = new Color(1f, 1f, 1f, 1f);
-            cols.pressedColor = new Color(0.65f, 0.65f, 0.65f, 1f);
-            cols.fadeDuration = 0.15f;
+            cols.normalColor      = Color.white;
+            cols.highlightedColor = new Color(0.70f, 0.70f, 0.70f, 1f);
+            cols.pressedColor     = new Color(0.50f, 0.50f, 0.50f, 1f);
+            cols.selectedColor    = Color.white;
+            cols.fadeDuration     = 0.12f;
             btn.colors = cols;
-            btn.targetGraphic = img;
+            btn.targetGraphic = bg;
             btn.onClick.AddListener(callback);
 
+            // Label
             var txt = MakeLabel(go.transform, label, 18f, Color.white);
             txt.fontStyle = FontStyles.Bold;
             var r = txt.GetComponent<RectTransform>();
             r.anchorMin = Vector2.zero;
             r.anchorMax = Vector2.one;
-            r.offsetMin = Vector2.zero;
-            r.offsetMax = Vector2.zero;
+            r.offsetMin = new Vector2(0f,  4f);
+            r.offsetMax = new Vector2(0f, -4f);
         }
 
         public void Hide()
