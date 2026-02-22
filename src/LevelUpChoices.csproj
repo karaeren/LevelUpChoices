@@ -22,6 +22,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Reference Include="LookingGlass">
+	    <HintPath>Packages\LookingGlass.dll</HintPath>
+	  </Reference>
 	  <Reference Include="RiskOfOptions">
 	    <HintPath>Packages\RiskOfOptions.dll</HintPath>
 	  </Reference>

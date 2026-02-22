@@ -1,3 +1,9 @@
+## 1.0.7
+
+- Fixed a bug where you didn't get correct amoutn of item selection tokens when levelling up multiple times.
+- Added support for LookingGlass. It's not a required dependency but when installed alongside this mod, it will enhance the descriptions of items.
+- Improved item selection UI.
+
 ## 1.0.6
 
 - Added configuration and RiskOfOptions support. Available configurations;

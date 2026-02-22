@@ -1,19 +1,27 @@
 using BepInEx;
 using R2API.Networking;
+using R2API.Utils;
+using RoR2;
 using UnityEngine;
-// using RoR2;
 // using UnityEngine.Networking;
+
 namespace LevelUpChoices
 {
+    // Dependencies
     [BepInDependency(NetworkingAPI.PluginGUID)]
-    [BepInDependency("com.rune580.riskofoptions", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(RiskOfOptions.PluginInfo.PLUGIN_GUID)]
+    // Soft Dependencies
+    [BepInDependency(LookingGlass.PluginInfo.PLUGIN_GUID, BepInDependency.DependencyFlags.SoftDependency)]
+    // Compatibility
+    [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
+
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
     public class LevelUpChoices : BaseUnityPlugin
     {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.0.6";
+        public const string PluginVersion = "1.0.7";
 
         public void Awake()
         {
@@ -21,6 +29,7 @@ namespace LevelUpChoices
 
             // Initialize configuration and Risk Of Options UI
             ModConfig.Init(Config, Info);
+            ItemCatalog.availability.CallWhenAvailable(Integrations.Init);
 
             // Register Network Messages
             NetworkingAPI.RegisterMessageType<Networking.SyncPlayerState>();

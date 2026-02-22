@@ -175,7 +175,7 @@ namespace LevelUpChoices
             rowLayout.childControlWidth = true;
             rowLayout.childControlHeight = true;
             rowLayout.childForceExpandWidth = true;
-            rowLayout.childForceExpandHeight = false;
+            rowLayout.childForceExpandHeight = true;
             rowLayout.spacing = 16;
             itemRow.AddComponent<ContentSizeFitter>().verticalFit =
                 ContentSizeFitter.FitMode.PreferredSize;
@@ -287,7 +287,6 @@ namespace LevelUpChoices
                 vLayout.childForceExpandWidth = true;
                 vLayout.spacing = 6;
                 vLayout.padding = new RectOffset(8, 8, 10, 56);
-                card.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
                 // Tier-colored top border (absolute overlay, excluded from VLG flow)
                 var border = new GameObject("TierBorder");
@@ -328,8 +327,8 @@ namespace LevelUpChoices
                 var nameSpace = new GameObject("NameSpacer");
                 nameSpace.transform.SetParent(card.transform, false);
                 var nameSpaceLe = nameSpace.AddComponent<LayoutElement>();
-                nameSpaceLe.minHeight = 2;
-                nameSpaceLe.preferredHeight = 2;
+                nameSpaceLe.minHeight = 1;
+                nameSpaceLe.preferredHeight = 1;
                 nameSpaceLe.flexibleHeight = 0;
 
                 string displayName = itemDef != null ? Language.GetString(itemDef.nameToken) : "Unknown";
@@ -341,19 +340,27 @@ namespace LevelUpChoices
                 // ── Description ──────────────────────────────────────────────────
                 if (ModConfig.ShowItemDescriptions.Value)
                 {
-                    string desc = itemDef != null ? Language.GetString(itemDef.pickupToken) : "";
+                    var localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
+                    int ownedCount = localMaster?.inventory?.GetItemCountEffective(itemDef?.itemIndex ?? ItemIndex.None) ?? 0;
+
+                    string desc = itemDef != null ?
+                        Integrations.lookingGlassEnabled ?
+                            LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true) :
+                            Language.GetString(itemDef.pickupToken)
+                        : "";
                     var descTmp = MakeLabel(card.transform, desc, 18f,
                         new Color(0.72f, 0.72f, 0.78f), TextAlignmentOptions.Center, true);
                     descTmp.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
                 }
 
-                // 4px extra gap above buttons
-                var btnSpace = new GameObject("BtnSpacer");
-                btnSpace.transform.SetParent(card.transform, false);
-                var btnSpaceLe = btnSpace.AddComponent<LayoutElement>();
-                btnSpaceLe.minHeight = 2;
-                btnSpaceLe.preferredHeight = 2;
-                btnSpaceLe.flexibleHeight = 0;
+                // Flexible spacer absorbs extra height so content stays top-aligned
+                // when all cards are stretched to the tallest card's height.
+                var flexSpace = new GameObject("FlexSpacer");
+                flexSpace.transform.SetParent(card.transform, false);
+                var flexSpaceLe = flexSpace.AddComponent<LayoutElement>();
+                flexSpaceLe.minHeight = 1;
+                flexSpaceLe.preferredHeight = 1;
+                flexSpaceLe.flexibleHeight = 1;
 
                 // ── BANISH / REROLL buttons ───────────────────────────────────
                 BuildAbsoluteButton(card.transform, "BANISH",
@@ -365,7 +372,7 @@ namespace LevelUpChoices
 
                 BuildAbsoluteButton(card.transform, "REROLL",
                     new Vector2(0.5f, 0f), new Vector2(1f, 0f),
-                    new Vector2( 4f,  8f), new Vector2(-8f, 48f),
+                    new Vector2(4f, 8f), new Vector2(-8f, 48f),
                     new Color(0.06f, 0.16f, 0.42f, 0.95f),
                     new Color(0.28f, 0.54f, 1.00f, 1f),
                     () => OnRerollClicked(slotIndex));
@@ -385,7 +392,7 @@ namespace LevelUpChoices
             }
             LayoutRebuilder.ForceRebuildLayoutImmediate(containerObject.GetComponent<RectTransform>());
         }
-        
+
         private void BuildAbsoluteButton(Transform parent, string label,
             Vector2 anchorMin, Vector2 anchorMax,
             Vector2 offsetMin, Vector2 offsetMax,
@@ -414,17 +421,17 @@ namespace LevelUpChoices
             accentRt.anchorMin = new Vector2(0f, 1f);
             accentRt.anchorMax = new Vector2(1f, 1f);
             accentRt.offsetMin = new Vector2(0f, -4f);
-            accentRt.offsetMax = new Vector2(0f,  0f);
+            accentRt.offsetMax = new Vector2(0f, 0f);
             accentGo.AddComponent<Image>().color = accentColor;
 
             // Button dims bg on hover by multiplying its color
             var btn = go.AddComponent<Button>();
             var cols = btn.colors;
-            cols.normalColor      = Color.white;
+            cols.normalColor = Color.white;
             cols.highlightedColor = new Color(0.70f, 0.70f, 0.70f, 1f);
-            cols.pressedColor     = new Color(0.50f, 0.50f, 0.50f, 1f);
-            cols.selectedColor    = Color.white;
-            cols.fadeDuration     = 0.12f;
+            cols.pressedColor = new Color(0.50f, 0.50f, 0.50f, 1f);
+            cols.selectedColor = Color.white;
+            cols.fadeDuration = 0.12f;
             btn.colors = cols;
             btn.targetGraphic = bg;
             btn.onClick.AddListener(callback);
@@ -435,7 +442,7 @@ namespace LevelUpChoices
             var r = txt.GetComponent<RectTransform>();
             r.anchorMin = Vector2.zero;
             r.anchorMax = Vector2.one;
-            r.offsetMin = new Vector2(0f,  4f);
+            r.offsetMin = new Vector2(0f, 4f);
             r.offsetMax = new Vector2(0f, -4f);
         }
 

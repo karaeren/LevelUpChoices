@@ -54,11 +54,18 @@ namespace LevelUpChoices
 
             // After orig(), check if the team leveled up and update cached values.
             uint newLevel = self.GetTeamLevel(teamIndex);
-            if (newLevel != cachedLevel)
+            if (newLevel > cachedLevel)
             {
+                uint previousLevel = cachedLevel;
                 cachedLevel = newLevel;
                 cachedMultiplier = StartMultiplier * Math.Pow(GrowthRate, cachedLevel - 1);
-                OnLevelUp?.Invoke(cachedLevel);
+
+                // Fire once per level gained so tokens are awarded for every level,
+                // even when a large XP gain skips multiple levels at once.
+                for (uint lvl = previousLevel + 1; lvl <= newLevel; lvl++)
+                {
+                    OnLevelUp?.Invoke(lvl);
+                }
             }
         }
     }

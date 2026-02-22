@@ -1,14 +1,13 @@
 # LevelUpChoices
 
-![Demo image](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/Thunderstore-LevelUpChoices/demo.png)
+![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
+![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
 
 This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
 
 Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
 
 Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game.
-
-[Source Code (GitHub)](https://github.com/karaeren/LevelUpChoices/)
 
 ## How it works
 
@@ -24,11 +23,9 @@ Press **F3** at any time to open or close the selection menu.
 
 XP scaling is eased to make it possible to reach higher levels, or even the max level. This way you'll have an adequate amount of items during each stage.
 
-
 ## Mod Support
 
 This mod fully supports items added by other mods. No configuration or tinkering needed!
-
 
 ## Multiplayer
 
@@ -36,5 +33,4 @@ Each player has fully independent state — their own item options, their own ba
 
 ## TODO
 
-- Integrate LookingGlass or something like that to make item descriptions better
 - Add pausing during item selection (configurable)
