@@ -8,8 +8,6 @@ Every time the team levels up, each player gets to pick from 3 items. Equipment 
 
 [Source Code (GitHub)](https://github.com/karaeren/LevelUpChoices/)
 
----
-
 ## How it works
 
 **Pick** — Choose one of the 3 items shown. Picking resets your reroll token.
@@ -20,31 +18,22 @@ Every time the team levels up, each player gets to pick from 3 items. Equipment 
 
 Press **F3** at any time to open or close the selection menu.
 
----
+## Levels and XP
 
-## Item weights
+XP scaling is eased to make it possible to reach higher levels, or even the max level. This way you'll have an adequate amount of items during each stage.
 
-Early levels skew heavily toward white items. As you pick more items the odds gradually shift toward greens, reds, boss drops, and lunars. The starting split is roughly 75/16/6/1/2 (white/green/red/boss/lunar) and drifts toward higher tiers the more you've already picked.
 
-Rusted Keys are excluded from the pool since crate spawns are removed.
+## Mod Support
 
-Note: This system will be changed in the future.
+This mod fully supports items added by other mods. No configuration or tinkering needed!
 
----
-
-## XP behavior
-
-From level 10 onward the mod caps the gap to the next level at 2000 XP, which keeps leveling from slowing down too much in the later stages of a run. You can now reach level 94!
-
----
 
 ## Multiplayer
 
 Each player has fully independent state — their own item options, their own banish list, their own tokens. Everything runs server-side, so the host has to have the mod. Clients need it installed too so they can select their items.
 
----
-
 ## TODO
 
-- Check out wiki for item weights. Use ItemDef Tier and dynamically allocate weight for each item.
 - Add configs
+- Add pausing during item selection (configurable)
+- Integrate LookingGlass or something like that to make item descriptions better

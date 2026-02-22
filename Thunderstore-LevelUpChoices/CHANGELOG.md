@@ -1,3 +1,7 @@
+## 1.0.5
+
+- Updated README
+
 ## 1.0.4
 
 - Updated experience scaling logic. It's a bit harder than the previous logic after level 30 but still not as bad as the game's original logic.

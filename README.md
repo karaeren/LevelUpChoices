@@ -6,8 +6,6 @@ This mod removes most of the normal item sources from stages — chests, shrines
 
 Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
 
----
-
 ## How it works
 
 **Pick** — Choose one of the 3 items shown. Picking resets your reroll token.
@@ -18,23 +16,15 @@ Every time the team levels up, each player gets to pick from 3 items. Equipment 
 
 Press **F3** at any time to open or close the selection menu.
 
----
+## Levels and XP
 
-## Item weights
+XP scaling is eased to make it possible to reach higher levels, or even the max level. This way you'll have an adequate amount of items during each stage.
 
-Early levels skew heavily toward white items. As you pick more items the odds gradually shift toward greens, reds, boss drops, and lunars. The starting split is roughly 75/16/6/1/2 (white/green/red/boss/lunar) and drifts toward higher tiers the more you've already picked.
 
-Rusted Keys are excluded from the pool since crate spawns are removed.
+## Mod Support
 
-Note: This system will be changed in the future.
+This mod fully supports items added by other mods. No configuration or tinkering needed!
 
----
-
-## XP behavior
-
-From level 10 onward the mod caps the gap to the next level at 2000 XP, which keeps leveling from slowing down too much in the later stages of a run. You can now reach level 94!
-
----
 
 ## Multiplayer
 
