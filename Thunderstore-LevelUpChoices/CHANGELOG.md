@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Added a way to pause the game when item selection UI is displayed. Works in both singleplayer and multiplayer but when creating a multiplayer game, the host must enable multiplayer pause.
+
 ## 1.0.7
 
 - Fixed a bug where you didn't get correct amoutn of item selection tokens when levelling up multiple times.

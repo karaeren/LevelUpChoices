@@ -12,6 +12,8 @@ namespace LevelUpChoices
         // Shared
         // ═══════════════════════════════════════════════════════════════════
         public static ConfigEntry<bool> ModEnabled;
+        public static ConfigEntry<bool> PauseOnItemSelect;
+
 
         // ═══════════════════════════════════════════════════════════════════
         // Client
@@ -55,6 +57,10 @@ namespace LevelUpChoices
             ModEnabled = config.Bind(
                 "Shared", "Mod Enabled", true,
                 "Master toggle – when disabled the mod does nothing.");
+
+            PauseOnItemSelect = config.Bind(
+                "Client", "Pause On Item Select", true,
+                "Pause the game while the item selection UI is open. In singleplayer, pauses directly. In multiplayer, uses the built-in pause system (requires host with multiplayer pause enabled).");
 
             // ───────────────────────────────────────────────────────────────
             // Client
@@ -173,6 +179,8 @@ namespace LevelUpChoices
         private static void RegisterSharedOptions()
         {
             ModSettingsManager.AddOption(new CheckBoxOption(ModEnabled));
+            ModSettingsManager.AddOption(new CheckBoxOption(PauseOnItemSelect));
+
         }
 
         private static void RegisterClientOptions()

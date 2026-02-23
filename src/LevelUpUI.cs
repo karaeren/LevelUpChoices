@@ -56,6 +56,10 @@ namespace LevelUpChoices
         {
             orig(self);
             isPaused = true;
+
+            // If we triggered the pause (item select open), keep our UI visible
+            if (GamePauseManager.IsPausedByUs) return;
+
             if (canvasObject) canvasObject.SetActive(false);
         }
 
@@ -63,6 +67,10 @@ namespace LevelUpChoices
         {
             orig(self);
             isPaused = false;
+
+            // If we triggered the pause, our UI is already visible — don't interfere
+            if (GamePauseManager.IsPausedByUs) return;
+
             if (canvasObject) canvasObject.SetActive(true);
         }
 
@@ -233,9 +241,16 @@ namespace LevelUpChoices
             float scale = ModConfig.UIScale.Value;
             containerObject.GetComponent<RectTransform>().localScale = new Vector3(scale, scale, 1f);
 
+            // Ensure canvas is active — it may have been hidden by another player's
+            // pause (OnPauseScreenEnabled hides it when IsPausedByUs is false).
+            if (canvasObject && !canvasObject.activeSelf)
+                canvasObject.SetActive(true);
+
             containerObject.SetActive(true);
             UpdateTokens();
             UpdateOptions(pickupIndices);
+
+            GamePauseManager.Pause();
         }
 
         public void UpdateOptions(List<PickupIndex> pickupIndices)
@@ -450,6 +465,7 @@ namespace LevelUpChoices
         {
             if (!IsVisible) return;
             IsVisible = false;
+            GamePauseManager.Unpause();
             StartCoroutine(HideNextFrame());
         }
 

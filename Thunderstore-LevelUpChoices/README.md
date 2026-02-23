@@ -1,13 +1,16 @@
 # LevelUpChoices
 
 ![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
-![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
+
+![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_config.png)
 
 This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
 
 Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
 
-Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game.
+Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game. It fully supports items added by 3rd party mods. LookingGlass mod is highly recommended!
+
+Contact me at Discord (@erenkara) for any bugs, suggestions etc...
 
 ## How it works
 
@@ -30,7 +33,3 @@ This mod fully supports items added by other mods. No configuration or tinkering
 ## Multiplayer
 
 Each player has fully independent state — their own item options, their own banish list, their own tokens. Everything runs server-side, so the host has to have the mod. Clients need it installed too so they can select their items.
-
-## TODO
-
-- Add pausing during item selection (configurable)

@@ -189,5 +189,38 @@ namespace LevelUpChoices
                 }
             }
         }
+
+        public class SendPickingState : INetMessage
+        {
+            NetworkInstanceId netId;
+            bool isPicking;
+
+            public SendPickingState() { }
+            public SendPickingState(NetworkInstanceId netId, bool isPicking)
+            {
+                this.netId = netId;
+                this.isPicking = isPicking;
+            }
+
+            public void Serialize(NetworkWriter writer)
+            {
+                writer.Write(netId);
+                writer.Write(isPicking);
+            }
+
+            public void Deserialize(NetworkReader reader)
+            {
+                netId = reader.ReadNetworkId();
+                isPicking = reader.ReadBoolean();
+            }
+
+            public void OnReceived()
+            {
+                if (NetworkServer.active)
+                {
+                    GamePauseManager.HandlePickingState(netId, isPicking);
+                }
+            }
+        }
     }
 }

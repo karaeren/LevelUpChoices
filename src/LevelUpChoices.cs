@@ -21,7 +21,7 @@ namespace LevelUpChoices
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.0.7";
+        public const string PluginVersion = "1.0.8";
 
         public void Awake()
         {
@@ -37,6 +37,7 @@ namespace LevelUpChoices
             NetworkingAPI.RegisterMessageType<Networking.SendItemSelection>();
             NetworkingAPI.RegisterMessageType<Networking.SendBanish>();
             NetworkingAPI.RegisterMessageType<Networking.SendReroll>();
+            NetworkingAPI.RegisterMessageType<Networking.SendPickingState>();
 
             // Init Managers
             var logicObject = new GameObject("LevelUpLogic");

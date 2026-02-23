@@ -94,6 +94,9 @@ namespace LevelUpChoices
             playerStates.Clear();
             currentOptions.Clear();
 
+            // Safety net: ensure we don't leave the game paused
+            GamePauseManager.ForceReset();
+
             if (LevelUpUI.Instance)
             {
                 LevelUpUI.Instance.Hide();
