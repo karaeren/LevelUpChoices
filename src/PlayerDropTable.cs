@@ -70,7 +70,7 @@ namespace LevelUpChoices
                 }
                 catch { /* Run may not be active */ }
 
-                if (!ModConfig.EnableInteractableRemoval.Value && (
+                if (ModConfig.EnableInteractableRemoval.Value && (
                     def.name == "TreasureCache" || def.name == "ExtraShrineItem"
                     || def.name == "LowerPricedChests" || def.name == "MultiShopCard"
                     || def.name == "ITEM_SANDSWEPT_HALLOWED_ICHOR" || def.name == "ITEM_SANDSWEPT_SEQUENCED_FATE"

@@ -46,6 +46,9 @@ Each player has fully independent state — their own item options, their own ba
 <details>
 <summary>Reveal</summary>
 
+## 1.1.0
+
+- Fixed a bug where some items weren't being disabled even though "remove interractables" option is set.
 ## 1.0.9
 
 - Removed all types of "Scrap"s from the drop table, unless the player is using the Drifter character.
