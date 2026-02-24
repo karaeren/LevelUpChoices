@@ -1,31 +1,26 @@
+using System.IO;
 using BepInEx.Configuration;
 using RiskOfOptions;
-using RiskOfOptions.Options;
 using RiskOfOptions.OptionConfigs;
+using RiskOfOptions.Options;
 using UnityEngine;
-using System.IO;
+
 namespace LevelUpChoices
 {
     public static class ModConfig
     {
-        // ═══════════════════════════════════════════════════════════════════
         // Shared
-        // ═══════════════════════════════════════════════════════════════════
         public static ConfigEntry<bool> ModEnabled;
         public static ConfigEntry<bool> PauseOnItemSelect;
+        public static ConfigEntry<int> DebugPassword;
 
-
-        // ═══════════════════════════════════════════════════════════════════
         // Client
-        // ═══════════════════════════════════════════════════════════════════
         public static ConfigEntry<KeyboardShortcut> ToggleMenuKey;
         public static ConfigEntry<float> UIScale;
         public static ConfigEntry<bool> ShowItemDescriptions;
         public static ConfigEntry<bool> EnableNotifications;
 
-        // ═══════════════════════════════════════════════════════════════════
         // Server
-        // ═══════════════════════════════════════════════════════════════════
         public static ConfigEntry<bool> EnableInteractableRemoval;
         public static ConfigEntry<int> ItemChoiceCount;
         public static ConfigEntry<float> ExperienceStartMultiplier;
@@ -51,23 +46,24 @@ namespace LevelUpChoices
 
         public static void Init(ConfigFile config, BepInEx.PluginInfo pluginInfo)
         {
-            // ───────────────────────────────────────────────────────────────
+
             // Shared
-            // ───────────────────────────────────────────────────────────────
             ModEnabled = config.Bind(
-                "Shared", "Mod Enabled", true,
-                "Master toggle – when disabled the mod does nothing.");
+                            "Shared", "Mod Enabled", true,
+                            "Master toggle – when disabled the mod does nothing.");
 
             PauseOnItemSelect = config.Bind(
-                "Client", "Pause On Item Select", true,
+                "Shared", "Pause On Item Select", true,
                 "Pause the game while the item selection UI is open. In singleplayer, pauses directly. In multiplayer, uses the built-in pause system (requires host with multiplayer pause enabled).");
 
-            // ───────────────────────────────────────────────────────────────
+            DebugPassword = config.Bind(
+                "Shared", "Debug Password", 1,
+                "This is only to be used by the developer for debugging the game.");
+
             // Client
-            // ───────────────────────────────────────────────────────────────
             ToggleMenuKey = config.Bind(
-                "Client", "Toggle Menu Key", new KeyboardShortcut(KeyCode.F3),
-                "Key to open / close the level-up item selection menu.");
+                            "Client", "Toggle Menu Key", new KeyboardShortcut(KeyCode.F3),
+                            "Key to open / close the level-up item selection menu.");
 
             UIScale = config.Bind(
                 "Client", "UI Scale", 1.0f,
@@ -81,12 +77,10 @@ namespace LevelUpChoices
                 "Client", "Enable Notifications", true,
                 "Shows the notification badge when item selection is available.");
 
-            // ───────────────────────────────────────────────────────────────
             // Server
-            // ───────────────────────────────────────────────────────────────
             EnableInteractableRemoval = config.Bind(
-                "Server", "Remove Chests & Interactables", true,
-                "Remove chests, printers, shrines and other item-giving interactables from stages.");
+                            "Server", "Remove Chests & Interactables", true,
+                            "Remove chests, printers, shrines and other item-giving interactables from stages.");
 
             ItemChoiceCount = config.Bind(
                 "Server", "Item Choices", 3,
@@ -140,9 +134,7 @@ namespace LevelUpChoices
             LateWeightBoss = config.Bind("Server", "Late Weight – Boss", 8f,
                 "Category weight for Boss items at 30+ tokens used.");
 
-            // ───────────────────────────────────────────────────────────────
             // Register with Risk Of Options
-            // ───────────────────────────────────────────────────────────────
             ModSettingsManager.SetModDescription("Level Up Choices – pick items when your team levels up.");
 
             try
@@ -154,7 +146,7 @@ namespace LevelUpChoices
                 {
                     string file = files[0];
                     byte[] bytes = File.ReadAllBytes(file);
-                    Texture2D tex = new Texture2D(256, 256, TextureFormat.ARGB32, false, false);
+                    Texture2D tex = new(256, 256, TextureFormat.ARGB32, false, false);
                     tex.LoadImage(bytes);
                     tex.filterMode = FilterMode.Point;
                     Sprite icon = Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f, 1, SpriteMeshType.Tight, Vector4.zero, true);
@@ -166,20 +158,19 @@ namespace LevelUpChoices
                 Log.Warning($"Failed to load mod icon: {e.Message}");
             }
 
-
             RegisterSharedOptions();
             RegisterClientOptions();
             RegisterServerOptions();
         }
 
-        // ═══════════════════════════════════════════════════════════════════
         // Risk Of Options registration
-        // ═══════════════════════════════════════════════════════════════════
 
         private static void RegisterSharedOptions()
         {
             ModSettingsManager.AddOption(new CheckBoxOption(ModEnabled));
             ModSettingsManager.AddOption(new CheckBoxOption(PauseOnItemSelect));
+            ModSettingsManager.AddOption(new IntSliderOption(DebugPassword,
+                new IntSliderConfig { min = 1, max = 9999 }));
 
         }
 

@@ -1,8 +1,7 @@
+using System.Collections.Generic;
 using R2API.Networking.Interfaces;
 using RoR2;
-using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections.Generic;
 
 namespace LevelUpChoices
 {
@@ -74,7 +73,7 @@ namespace LevelUpChoices
             public void Deserialize(NetworkReader reader)
             {
                 targetNetId = reader.ReadNetworkId();
-                pickupIndices = new List<PickupIndex>();
+                pickupIndices = [];
                 int count = reader.ReadInt32();
                 for (int i = 0; i < count; i++)
                 {

@@ -26,7 +26,9 @@ XP scaling is eased to make it possible to reach higher levels, or even the max 
 
 ## Mod Support
 
-This mod fully supports items added by other mods. No configuration or tinkering needed!
+This mod fully supports items added by other mods. No configuration or tinkering needed! Some mod items are situationally disabled if they are unobtainable or if they are tied to interactables that are disabled.
+
+If you think a certain mod item should be disabled or enabled, please open an issue on GitHub.
 
 ## Multiplayer
 

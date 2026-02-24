@@ -5,27 +5,28 @@ using UnityEngine;
 
 namespace LevelUpChoices
 {
-    /// Per-player drop table backed by a Dictionary<ItemIndex, float>.
-    /// Weights are recalculated lazily when UsedTokens changes.
-    /// Banished items are permanently removed from the table.
+    // Per-player drop table backed by a Dictionary<ItemIndex, float>.
+    // Weights are recalculated lazily when UsedTokens changes.
+    // Banished items are permanently removed from the table.
     public class PlayerDropTable
     {
-        private static readonly HashSet<string> BannedItemNames = new HashSet<string>
-        {
-            "TreasureCache"
-        };
+        public static readonly HashSet<string> BannedItemNames =
+        [
+            // Base game
+            "ArtifactKey"
+        ];
 
         // ItemIndex → individual item weight (category weight / items in tier)
-        private readonly Dictionary<ItemIndex, float> _weights = new Dictionary<ItemIndex, float>();
+        private readonly Dictionary<ItemIndex, float> _weights = [];
         // Avoids GetItemDef on every recalc
-        private readonly Dictionary<ItemIndex, ItemTier> _tiers = new Dictionary<ItemIndex, ItemTier>();
+        private readonly Dictionary<ItemIndex, ItemTier> _tiers = [];
         // Maintained incrementally so RecalculateWeights never needs a count pass
-        private readonly Dictionary<ItemTier, int> _tierCounts = new Dictionary<ItemTier, int>();
+        private readonly Dictionary<ItemTier, int> _tierCounts = [];
         private int _lastCalculatedTokens = -1;
 
-        /// Build the table from all valid items in ItemCatalog and compute initial weights.
-        /// Call once per run when the player's state is first created.
-        public void Initialize()
+        // Build the table from all valid items in ItemCatalog and compute initial weights.
+        // Call once per run when the player's state is first created.
+        public void Initialize(bool enableScraps = false)
         {
             _weights.Clear();
             _tiers.Clear();
@@ -34,32 +35,80 @@ namespace LevelUpChoices
 
             foreach (var index in ItemCatalog.allItems)
             {
+                string skipReason = null;
                 var def = ItemCatalog.GetItemDef(index);
-                if (def == null) continue;
-                if (def.hidden) continue;
-                if (def.tags.Contains(ItemTag.IgnoreForDropList)) continue;
-                if (BannedItemNames.Contains(def.name)) continue;
+
+                if (def == null)
+                    skipReason = "DEF_NULL";
+                if (def.hidden)
+                    skipReason = "HIDDEN";
+                if (def.tags.Contains(ItemTag.IgnoreForDropList))
+                    skipReason = "IGNORE_FOR_DROP_LIST";
+                if (!enableScraps && (def.tags.Contains(ItemTag.Scrap) || def.tags.Contains(ItemTag.PriorityScrap)))
+                    skipReason = "SCRAP_ON_NON_DRIFTER";
+                if (BannedItemNames.Contains(def.name))
+                    skipReason = "BANNED";
                 // Only include tiers we actually weight; skip Void, NoTier, etc.
                 if (def.tier is not (ItemTier.Tier1 or ItemTier.Tier2 or ItemTier.Tier3
-                                     or ItemTier.Boss or ItemTier.Lunar)) continue;
+                                     or ItemTier.Boss or ItemTier.Lunar))
+                    skipReason = "INVALID_TIER";
+
+                // Skip items that have no valid pickup entry (common with modded items
+                // that are registered in ItemCatalog but not meant to be dropped).
+                if (PickupCatalog.FindPickupIndex(index) == PickupIndex.none)
+                    skipReason = "NO_PICKUP_INDEX";
+
+                bool runAvailable = false;
+                bool runExists = false;
+                try
+                {
+                    if (Run.instance != null)
+                    {
+                        runExists = true;
+                        runAvailable = Run.instance.availableItems.Contains(index);
+                    }
+                }
+                catch { /* Run may not be active */ }
+
+                if (!ModConfig.EnableInteractableRemoval.Value && (
+                    def.name == "TreasureCache" || def.name == "ExtraShrineItem"
+                    || def.name == "LowerPricedChests" || def.name == "MultiShopCard"
+                    || def.name == "ITEM_SANDSWEPT_HALLOWED_ICHOR" || def.name == "ITEM_SANDSWEPT_SEQUENCED_FATE"
+                    || def.name == "ITEM_SANDSWEPT_UNIVERSAL_VIP_PASS" || def.name == "PrimalBirthright"
+                    ))
+                    skipReason = "INTERACTABLE_REMOVAL_ENABLED";
+
+                if (!runExists)
+                    skipReason = "RUN_INSTANCE_NULL";
+                else if (!runAvailable)
+                    skipReason = "NOT_AVAILABLE_IN_RUN";
+
+                if (skipReason != null)
+                {
+                    Log.Debug($"Skipping {def?.name ?? index.ToString()} - {skipReason}");
+                    continue;
+                }
 
                 _tiers[index] = def.tier;
                 _weights[index] = 0f; // assigned properly in RecalculateWeights
 
-                if (!_tierCounts.ContainsKey(def.tier)) _tierCounts[def.tier] = 0;
+                if (!_tierCounts.ContainsKey(def.tier))
+                    _tierCounts[def.tier] = 0;
                 _tierCounts[def.tier]++;
             }
 
             RecalculateWeights(0);
         }
 
-        /// Update every item's weight based on the current UsedTokens value.
-        /// Skips recalculation if tokens &gt; 30 and weights are already at the cap,
-        /// or if UsedTokens hasn't changed since last call.
+        // Update every item's weight based on the current UsedTokens value.
+        // Skips recalculation if tokens>30 (late game) and weights are already at the cap,
+        // or if UsedTokens hasn't changed since last call.
         public void RecalculateWeights(int usedTokens)
         {
-            if (usedTokens == _lastCalculatedTokens) return;
-            if (usedTokens > 30 && _lastCalculatedTokens >= 30) return;
+            if (usedTokens == _lastCalculatedTokens)
+                return;
+            if (usedTokens > 30 && _lastCalculatedTokens >= 30)
+                return;
             _lastCalculatedTokens = usedTokens;
 
             // --- Two-phase lerp (early → late configurable weights) ---
@@ -109,11 +158,12 @@ namespace LevelUpChoices
             }
         }
 
-        /// Permanently remove an item from the table (banish) and immediately
-        /// redistribute its tier's weight across remaining items.
+        // Permanently remove an item from the table (banish) and immediately
+        // redistribute its tier's weight across remaining items.
         public void Remove(ItemIndex item)
         {
-            if (!_tiers.TryGetValue(item, out var tier)) return;
+            if (!_tiers.TryGetValue(item, out var tier))
+                return;
 
             _tiers.Remove(item);
             _weights.Remove(item);
@@ -125,20 +175,21 @@ namespace LevelUpChoices
             RecalculateWeights(tokens < 0 ? 0 : tokens);
         }
 
-        /// Pick a random item by weight, excluding any indices in <paramref name="exclude"/>.
+        // Pick a random item by weight.
         public ItemIndex Roll(ICollection<ItemIndex> exclude = null)
         {
             // Compute total weight of eligible items
             float total = 0f;
             foreach (var kv in _weights)
             {
-                if (exclude != null && exclude.Contains(kv.Key)) continue;
+                if (exclude != null && exclude.Contains(kv.Key))
+                    continue;
                 total += kv.Value;
             }
 
             if (total <= 0f)
             {
-                Log.Warning("PlayerDropTable: no eligible items to roll!");
+                Log.Warning("No eligible items to roll!");
                 return ItemIndex.None;
             }
 
@@ -148,7 +199,8 @@ namespace LevelUpChoices
 
             foreach (var kv in _weights)
             {
-                if (exclude != null && exclude.Contains(kv.Key)) continue;
+                if (exclude != null && exclude.Contains(kv.Key))
+                    continue;
                 cumulative += kv.Value;
                 last = kv.Key;
                 if (roll <= cumulative)

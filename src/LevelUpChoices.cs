@@ -1,9 +1,9 @@
 using BepInEx;
+using LevelUpChoices.Extensions;
 using R2API.Networking;
 using R2API.Utils;
 using RoR2;
 using UnityEngine;
-// using UnityEngine.Networking;
 
 namespace LevelUpChoices
 {
@@ -21,7 +21,7 @@ namespace LevelUpChoices
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.0.8";
+        public const string PluginVersion = "1.0.9";
 
         public void Awake()
         {
@@ -46,20 +46,9 @@ namespace LevelUpChoices
             logicObject.AddComponent<LevelUpUI>();
             logicObject.AddComponent<ExperienceHook>();
             logicObject.AddComponent<InteractableSpawnHook>();
+            logicObject.AddComponent<DebugManager>();
 
             Log.Info("LevelUpChoices initialized.");
         }
-
-
-        // private void Update()
-        // {
-        //     if (Input.GetKeyDown(KeyCode.F2))
-        //     {
-        //         if (NetworkServer.active)
-        //         {
-        //             TeamManager.instance.GiveTeamExperience(TeamIndex.Player, (TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player)) / 6);
-        //         }
-        //     }
-        // }
     }
 }

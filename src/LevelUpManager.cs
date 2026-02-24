@@ -1,10 +1,10 @@
+using System.Collections.Generic;
+using System.Linq;
 using R2API.Networking;
 using R2API.Networking.Interfaces;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace LevelUpChoices
 {
@@ -18,8 +18,8 @@ namespace LevelUpChoices
             public int BanishTokens = ModConfig.StartingBanishTokens.Value;
             public int RerollTokens = ModConfig.StartingRerollTokens.Value;
             public int UsedTokens = 0;
-            public List<ItemIndex> CurrentOptions = new List<ItemIndex>();
-            public PlayerDropTable DropTable = new PlayerDropTable();
+            public List<ItemIndex> CurrentOptions = [];
+            public PlayerDropTable DropTable = new();
         }
 
         // Client side state
@@ -28,14 +28,15 @@ namespace LevelUpChoices
         public int RerollTokens { get; private set; } = 0;
 
         // Local cache for UI
-        private List<PickupIndex> currentOptions = new List<PickupIndex>();
+        private List<PickupIndex> currentOptions = [];
 
         // Server side state
-        private Dictionary<NetworkInstanceId, PlayerState> playerStates = new Dictionary<NetworkInstanceId, PlayerState>();
+        private readonly Dictionary<NetworkInstanceId, PlayerState> playerStates = [];
 
         private void Awake()
         {
-            if (Instance) Destroy(Instance);
+            if (Instance)
+                Destroy(Instance);
             Instance = this;
 
             // Global hooks
@@ -51,8 +52,10 @@ namespace LevelUpChoices
 
         private void OnLevelUp(uint newLevel)
         {
-            if (!NetworkServer.active) return;
-            if (!ModConfig.ModEnabled.Value) return;
+            if (!NetworkServer.active)
+                return;
+            if (!ModConfig.ModEnabled.Value)
+                return;
 
             foreach (var player in PlayerCharacterMasterController.instances)
             {
@@ -62,7 +65,8 @@ namespace LevelUpChoices
                     if (!playerStates.ContainsKey(netId))
                     {
                         playerStates[netId] = new PlayerState();
-                        playerStates[netId].DropTable.Initialize();
+                        bool isDrifter = player.body.bodyIndex == DLC3Content.BodyPrefabs.DrifterBody.bodyIndex;
+                        playerStates[netId].DropTable.Initialize(isDrifter);
                     }
 
                     var state = playerStates[netId];
@@ -150,6 +154,7 @@ namespace LevelUpChoices
             {
                 var pickups = playerStates[netId].CurrentOptions
                     .Select(i => PickupCatalog.FindPickupIndex(i))
+                    .Where(p => p != PickupIndex.none)
                     .ToList();
                 new Networking.SyncItems(netId, pickups).Send(NetworkDestination.Clients);
             }
@@ -157,12 +162,15 @@ namespace LevelUpChoices
 
         public void HandlePlayerSelection(NetworkInstanceId netId, PickupIndex selection)
         {
-            if (!NetworkServer.active) return;
-            if (!playerStates.ContainsKey(netId)) return;
+            if (!NetworkServer.active)
+                return;
+            if (!playerStates.ContainsKey(netId))
+                return;
 
             var state = playerStates[netId];
 
-            if (state.SelectionTokens <= 0) return;
+            if (state.SelectionTokens <= 0)
+                return;
 
             state.SelectionTokens--;
             state.UsedTokens++;
@@ -171,6 +179,16 @@ namespace LevelUpChoices
             if (ModConfig.RerollTokenRefreshOnPick.Value)
                 state.RerollTokens = 1;
 
+            var pickupDef = PickupCatalog.GetPickupDef(selection);
+            if (pickupDef == null || pickupDef.itemIndex == ItemIndex.None)
+            {
+                Log.Warning($"Invalid pickup {selection}. Refunding token.");
+                state.SelectionTokens++;
+                state.UsedTokens--;
+                SyncState(netId);
+                return;
+            }
+
             foreach (var pcmc in PlayerCharacterMasterController.instances)
             {
                 if (pcmc.networkUser && pcmc.networkUser.netId == netId)
@@ -178,7 +196,7 @@ namespace LevelUpChoices
                     var master = pcmc.master;
                     if (master && master.inventory)
                     {
-                        master.inventory.GiveItemPermanent(PickupCatalog.GetPickupDef(selection).itemIndex);
+                        master.inventory.GiveItemPermanent(pickupDef.itemIndex);
                     }
                     break;
                 }
@@ -190,12 +208,16 @@ namespace LevelUpChoices
 
         public void HandlePlayerBanish(NetworkInstanceId netId, int slotIndex)
         {
-            if (!NetworkServer.active) return;
-            if (!playerStates.ContainsKey(netId)) return;
+            if (!NetworkServer.active)
+                return;
+            if (!playerStates.ContainsKey(netId))
+                return;
             var state = playerStates[netId];
 
-            if (state.BanishTokens <= 0) return;
-            if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count) return;
+            if (state.BanishTokens <= 0)
+                return;
+            if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count)
+                return;
 
             ItemIndex itemToBanish = state.CurrentOptions[slotIndex];
             state.BanishTokens--;
@@ -211,12 +233,16 @@ namespace LevelUpChoices
 
         public void HandlePlayerReroll(NetworkInstanceId netId, int slotIndex)
         {
-            if (!NetworkServer.active) return;
-            if (!playerStates.ContainsKey(netId)) return;
+            if (!NetworkServer.active)
+                return;
+            if (!playerStates.ContainsKey(netId))
+                return;
             var state = playerStates[netId];
 
-            if (state.RerollTokens <= 0) return;
-            if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count) return;
+            if (state.RerollTokens <= 0)
+                return;
+            if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count)
+                return;
 
             state.RerollTokens--;
 
@@ -230,21 +256,30 @@ namespace LevelUpChoices
 
         private void RollItemsForPlayer(NetworkInstanceId netId)
         {
-            if (!playerStates.ContainsKey(netId)) return;
+            if (!playerStates.ContainsKey(netId))
+                return;
             var state = playerStates[netId];
 
             state.CurrentOptions.Clear();
             int choiceCount = Mathf.Max(1, ModConfig.ItemChoiceCount.Value);
             for (int i = 0; i < choiceCount; i++)
             {
-                state.CurrentOptions.Add(state.DropTable.Roll(state.CurrentOptions));
+                var rolled = state.DropTable.Roll(state.CurrentOptions);
+                // Guard: skip items that have no valid pickup (e.g. modded items
+                // registered in ItemCatalog but without a pickup definition).
+                if (rolled == ItemIndex.None || PickupCatalog.FindPickupIndex(rolled) == PickupIndex.none)
+                {
+                    Log.Warning($"Rolled invalid item {rolled}, skipping slot.");
+                    continue;
+                }
+                state.CurrentOptions.Add(rolled);
             }
 
             SyncOptions(netId);
 
             if (NetworkUser.readOnlyLocalPlayersList.Count > 0 && NetworkUser.readOnlyLocalPlayersList[0].netId == netId)
             {
-                UpdateAvailableItems(state.CurrentOptions.Select(i => PickupCatalog.FindPickupIndex(i)).ToList());
+                UpdateAvailableItems([.. state.CurrentOptions.Select(i => PickupCatalog.FindPickupIndex(i))]);
             }
         }
 

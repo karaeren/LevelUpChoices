@@ -1,4 +1,6 @@
-using R2API.Networking;
+using System.Collections;
+using System.Collections.Generic;
+using LevelUpChoices.Extensions;
 using R2API.Networking.Interfaces;
 using RoR2;
 using RoR2.UI;
@@ -6,9 +8,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.EventSystems;
+using UnityEngine.Networking;
 using UnityEngine.UI;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace LevelUpChoices
 {
@@ -28,12 +29,13 @@ namespace LevelUpChoices
         private Sprite panelSprite;
         private Sprite buttonSprite;
 
-        private List<GameObject> buttonObjects = new List<GameObject>();
+        private readonly List<GameObject> buttonObjects = [];
         private bool isPaused = false;
 
         private void Awake()
         {
-            if (Instance) Destroy(Instance);
+            if (Instance)
+                Destroy(Instance);
             Instance = this;
 
             ror2Font = Addressables.LoadAssetAsync<TMP_FontAsset>("RoR2/Base/Common/Fonts/Bombardier.asset").WaitForCompletion();
@@ -58,9 +60,11 @@ namespace LevelUpChoices
             isPaused = true;
 
             // If we triggered the pause (item select open), keep our UI visible
-            if (GamePauseManager.IsPausedByUs) return;
+            if (GamePauseManager.IsPausedByUs)
+                return;
 
-            if (canvasObject) canvasObject.SetActive(false);
+            if (canvasObject)
+                canvasObject.SetActive(false);
         }
 
         private void OnPauseScreenDisabled(On.RoR2.UI.PauseScreenController.orig_OnDisable orig, RoR2.UI.PauseScreenController self)
@@ -69,9 +73,11 @@ namespace LevelUpChoices
             isPaused = false;
 
             // If we triggered the pause, our UI is already visible — don't interfere
-            if (GamePauseManager.IsPausedByUs) return;
+            if (GamePauseManager.IsPausedByUs)
+                return;
 
-            if (canvasObject) canvasObject.SetActive(true);
+            if (canvasObject)
+                canvasObject.SetActive(true);
         }
 
         // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -82,7 +88,8 @@ namespace LevelUpChoices
             var go = new GameObject("Label");
             go.transform.SetParent(parent, false);
             var tmp = go.AddComponent<HGTextMeshProUGUI>();
-            if (ror2Font) tmp.font = ror2Font;
+            if (ror2Font)
+                tmp.font = ror2Font;
             tmp.text = text;
             tmp.fontSize = fontSize;
             tmp.color = color;
@@ -105,9 +112,11 @@ namespace LevelUpChoices
 
         private Color GetTierColor(ItemDef itemDef)
         {
-            if (itemDef == null) return Color.white;
+            if (itemDef == null)
+                return Color.white;
             var tierDef = ItemTierCatalog.GetItemTierDef(itemDef.tier);
-            if (tierDef == null) return Color.white;
+            if (tierDef == null)
+                return Color.white;
             return ColorCatalog.GetColor(tierDef.colorIndex);
         }
 
@@ -201,7 +210,8 @@ namespace LevelUpChoices
             notifRect.sizeDelta = new Vector2(260f, 62f);
 
             var notifImg = notificationPanel.AddComponent<Image>();
-            if (panelSprite) { notifImg.sprite = panelSprite; notifImg.type = Image.Type.Sliced; }
+            if (panelSprite)
+            { notifImg.sprite = panelSprite; notifImg.type = Image.Type.Sliced; }
             notifImg.color = new Color(0.9f, 0.68f, 0.08f, 0.88f);
 
             // Gold top-edge accent
@@ -234,7 +244,8 @@ namespace LevelUpChoices
 
         public void ShowChoices(List<PickupIndex> pickupIndices)
         {
-            if (IsVisible) return;
+            if (IsVisible)
+                return;
             IsVisible = true;
 
             // Apply configurable UI scale
@@ -256,7 +267,8 @@ namespace LevelUpChoices
         public void UpdateOptions(List<PickupIndex> pickupIndices)
         {
             Transform itemRow = containerObject.transform.Find("ItemRow");
-            if (!itemRow) return;
+            if (!itemRow)
+                return;
 
             // DestroyImmediate prevents 1-frame ghost children causing layout flicker
             for (int c = itemRow.childCount - 1; c >= 0; c--)
@@ -276,7 +288,8 @@ namespace LevelUpChoices
                 card.transform.SetParent(itemRow, false);
 
                 var cardImg = card.AddComponent<Image>();
-                if (panelSprite) { cardImg.sprite = panelSprite; cardImg.type = Image.Type.Sliced; }
+                if (panelSprite)
+                { cardImg.sprite = panelSprite; cardImg.type = Image.Type.Sliced; }
                 cardImg.color = new Color(0.08f, 0.08f, 0.12f, 0.96f);
 
                 // Card-level button – clicking anywhere on the card (icon, spacers, name, desc)
@@ -336,9 +349,13 @@ namespace LevelUpChoices
                 var iconImg = iconGo2.AddComponent<Image>();
                 iconImg.color = Color.white;
                 iconImg.preserveAspect = true;
-                if (pickupDef?.iconSprite != null) iconImg.sprite = pickupDef.iconSprite;
+                if (pickupDef?.iconSprite != null)
+                    iconImg.sprite = pickupDef.iconSprite;
 
                 // ── Name ─────────────────────────────────────────────────────────
+                var localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
+                int ownedCount = localMaster?.inventory?.GetItemCountEffective(itemDef?.itemIndex ?? ItemIndex.None) ?? 0;
+
                 var nameSpace = new GameObject("NameSpacer");
                 nameSpace.transform.SetParent(card.transform, false);
                 var nameSpaceLe = nameSpace.AddComponent<LayoutElement>();
@@ -347,6 +364,7 @@ namespace LevelUpChoices
                 nameSpaceLe.flexibleHeight = 0;
 
                 string displayName = itemDef != null ? Language.GetString(itemDef.nameToken) : "Unknown";
+                displayName += ownedCount > 0 ? $"  <color=#60C060>({ownedCount})</color>" : "";
                 var nameTmp = MakeLabel(card.transform, displayName, 24f, tierColor,
                     TextAlignmentOptions.Center, true);
                 nameTmp.fontStyle = FontStyles.Bold;
@@ -355,9 +373,6 @@ namespace LevelUpChoices
                 // ── Description ──────────────────────────────────────────────────
                 if (ModConfig.ShowItemDescriptions.Value)
                 {
-                    var localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
-                    int ownedCount = localMaster?.inventory?.GetItemCountEffective(itemDef?.itemIndex ?? ItemIndex.None) ?? 0;
-
                     string desc = itemDef != null ?
                         Integrations.lookingGlassEnabled ?
                             LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true) :
@@ -463,7 +478,8 @@ namespace LevelUpChoices
 
         public void Hide()
         {
-            if (!IsVisible) return;
+            if (!IsVisible)
+                return;
             IsVisible = false;
             GamePauseManager.Unpause();
             StartCoroutine(HideNextFrame());
@@ -475,14 +491,14 @@ namespace LevelUpChoices
             // before the CursorOpener and MPEventSystem components are disabled.
             // This prevents the camera / input system from getting stuck.
             yield return null;
-            if (EventSystem.current != null)
-                EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current?.SetSelectedGameObject(null);
             containerObject.SetActive(false);
         }
 
         public void ShowNotification()
         {
-            if (!ModConfig.EnableNotifications.Value) return;
+            if (!ModConfig.EnableNotifications.Value)
+                return;
             notificationPanel.SetActive(true);
             UpdateNotificationText();
         }
@@ -508,25 +524,66 @@ namespace LevelUpChoices
 
         // ─── Event handlers ───────────────────────────────────────────────────────
 
+        private float lastClickTime = 0f;
+        private const float ClickCooldown = 0.15f;
+
         private void OnItemClicked(PickupIndex pickupIndex)
         {
-            if (LevelUpManager.Instance.SpendTokenLocal())
-                new Networking.SendItemSelection(pickupIndex, RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId)
-                    .Send(NetworkDestination.Server);
+            // Guard against rapid double-clicks
+            if (Time.unscaledTime - lastClickTime < ClickCooldown)
+                return;
+            lastClickTime = Time.unscaledTime;
+
+            if (!LevelUpManager.Instance.SpendTokenLocal())
+                return;
+
+            var netId = RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId;
+
+            if (NetworkServer.active)
+            {
+                // Host: call server handler directly — R2API message
+                // delivery from host-to-self is not always reliable.
+                LevelUpManager.Instance.HandlePlayerSelection(netId, pickupIndex);
+            }
+            else
+            {
+                new Networking.SendItemSelection(pickupIndex, netId)
+                    .Send(R2API.Networking.NetworkDestination.Server);
+            }
         }
 
         private void OnBanishClicked(int slotIndex)
         {
-            if (LevelUpManager.Instance.BanishTokens > 0)
-                new Networking.SendBanish(slotIndex, RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId)
-                    .Send(NetworkDestination.Server);
+            if (LevelUpManager.Instance.BanishTokens <= 0)
+                return;
+
+            var netId = RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId;
+            if (NetworkServer.active)
+            {
+                LevelUpManager.Instance.HandlePlayerBanish(netId, slotIndex);
+            }
+            else
+            {
+                new Networking.SendBanish(slotIndex, netId)
+                    .Send(R2API.Networking.NetworkDestination.Server);
+            }
         }
 
         private void OnRerollClicked(int slotIndex)
         {
-            if (LevelUpManager.Instance.RerollTokens > 0)
-                new Networking.SendReroll(slotIndex, RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId)
-                    .Send(NetworkDestination.Server);
+            if (LevelUpManager.Instance.RerollTokens <= 0)
+                return;
+
+            var netId = RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId;
+            if (NetworkServer.active)
+            {
+                LevelUpManager.Instance.HandlePlayerReroll(netId, slotIndex);
+            }
+            else
+            {
+                new Networking.SendReroll(slotIndex, netId)
+                    .Send(R2API.Networking.NetworkDestination.Server);
+            }
         }
     }
 }

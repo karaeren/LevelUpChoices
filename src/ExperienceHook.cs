@@ -48,6 +48,11 @@ namespace LevelUpChoices
             }
 
             ulong modifiedExperience = (ulong)(experience * cachedMultiplier);
+            // With configuration the exp player receives can go very high, so check for overflow and clamp to ulong.MaxValue if it occurs.
+            if (modifiedExperience < experience)
+            {
+                modifiedExperience = ulong.MaxValue;
+            }
             modifiedExperience = (ulong)Math.Max(modifiedExperience, 1); // Ensure at least 1 experience is given
 
             orig(self, teamIndex, modifiedExperience);

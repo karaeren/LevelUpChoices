@@ -3,7 +3,7 @@ using System.Reflection;
 using LookingGlass.ItemStatsNameSpace;
 using RoR2;
 
-namespace LevelUpChoices
+namespace LevelUpChoices.Extensions
 {
     internal class LookingGlassIntegration
     {
@@ -45,7 +45,7 @@ namespace LevelUpChoices
             try
             {
                 return (string)_getItemDescriptionMethod.Invoke(
-                    null, new object[] { itemDef, itemCount, master, withOneMore, forceNew });
+                    null, [itemDef, itemCount, master, withOneMore, forceNew]);
             }
             catch (Exception e)
             {

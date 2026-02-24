@@ -1,7 +1,7 @@
-using RoR2;
-using UnityEngine;
 using System;
 using System.Linq;
+using RoR2;
+using UnityEngine;
 
 namespace LevelUpChoices
 {
@@ -14,13 +14,15 @@ namespace LevelUpChoices
 
         private void OnPrePopulateSceneServer(SceneDirector director)
         {
-            if (!ModConfig.ModEnabled.Value || !ModConfig.EnableInteractableRemoval.Value) return;
-            if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories) return;
+            if (!ModConfig.ModEnabled.Value || !ModConfig.EnableInteractableRemoval.Value)
+                return;
+            if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories)
+                return;
 
             var selection = ClassicStageInfo.instance.interactableCategories;
             if (!selection)
             {
-                Log.Error("No Interactable Categories found on ClassicStageInfo!");
+                Log.Error("No interactable categories found on ClassicStageInfo!");
                 return;
             }
 

@@ -1,33 +1,29 @@
-using R2API.Networking;
+using System.Collections.Generic;
 using R2API.Networking.Interfaces;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
-using System.Collections.Generic;
 
 namespace LevelUpChoices
 {
-    /// <summary>
-    /// Handles pausing/unpausing the game when the item selection UI is shown.
-    ///
-    /// Singleplayer: directly sets Time.timeScale = 0/1.
-    /// Multiplayer:  server tracks how many players are currently picking.
-    ///               Pauses when the first picker opens the UI,
-    ///               unpauses when the last picker closes it.
-    ///               Uses the native PauseStopController when multiplayer pause is enabled.
-    /// </summary>
+    // Handles pausing/unpausing the game when the item selection UI is shown.
+    // Singleplayer: Directly sets Time.timeScale = 0/1.
+    // Multiplayer: Server tracks how many players are currently picking. Pauses when the first picker opens the UI,
+    // unpauses when the last picker closes it. Uses the native PauseStopController when multiplayer pause is enabled.
     public static class GamePauseManager
     {
         private static float savedTimeScale = 1f;
         private static bool pausedByUs = false;
         public static bool IsPausedByUs => pausedByUs;
 
-        private static HashSet<NetworkInstanceId> activePickers = new HashSet<NetworkInstanceId>();
+        private static readonly HashSet<NetworkInstanceId> activePickers = [];
 
         public static void Pause()
         {
-            if (!ModConfig.PauseOnItemSelect.Value) return;
-            if (pausedByUs) return;
+            if (!ModConfig.PauseOnItemSelect.Value)
+                return;
+            if (pausedByUs)
+                return;
 
             if (IsSinglePlayer())
             {
@@ -48,7 +44,8 @@ namespace LevelUpChoices
 
         public static void Unpause()
         {
-            if (!pausedByUs) return;
+            if (!pausedByUs)
+                return;
 
             if (IsSinglePlayer())
             {
@@ -82,14 +79,14 @@ namespace LevelUpChoices
             activePickers.Clear();
         }
 
-        /// <summary>
-        /// Server-only. Called when a client reports they started or stopped picking.
-        /// Tracks the count of active pickers and pauses/unpauses accordingly.
-        /// </summary>
+        // Server-only. Called when a client reports they started or stopped picking.
+        // Tracks the count of active pickers and pauses/unpauses accordingly.
         public static void HandlePickingState(NetworkInstanceId netId, bool isPicking)
         {
-            if (!NetworkServer.active) return;
-            if (!ModConfig.PauseOnItemSelect.Value) return;
+            if (!NetworkServer.active)
+                return;
+            if (!ModConfig.PauseOnItemSelect.Value)
+                return;
 
             int previousCount = activePickers.Count;
 
@@ -112,12 +109,11 @@ namespace LevelUpChoices
             }
         }
 
-        /// <summary>
-        /// Server-only. Remove a player from the active pickers (e.g. on disconnect).
-        /// </summary>
+        // Server-only. Remove a player from the active pickers (e.g. on disconnect).
         public static void RemovePicker(NetworkInstanceId netId)
         {
-            if (!NetworkServer.active) return;
+            if (!NetworkServer.active)
+                return;
 
             if (activePickers.Remove(netId) && activePickers.Count == 0)
             {
@@ -159,10 +155,7 @@ namespace LevelUpChoices
         private static void ServerUnpause()
         {
             var controller = PauseStopController.instance;
-            if (controller != null)
-            {
-                controller.Pause(false);
-            }
+            controller?.Pause(false);
         }
     }
 }

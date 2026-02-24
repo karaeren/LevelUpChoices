@@ -1,3 +1,11 @@
+## 1.0.9
+
+- Removed all types of "Scrap"s from the drop table, unless the player is using the Drifter character.
+- Disabled items that are unobtainable. Previously if you didn't have a DLC, you still saw the item in the item selection UI but when you clicked it, you would lose your token and not get any items. This is automatically detected when a player joins.
+- Fixed a bug where you would only get 1 experience if you set the exp multiplier configuration high and you were at 80+ levels.
+- Removed "Artifact Key" from the drop table.
+- Removed "Chance Doll", "Executive Card", "Sale Star", "Hallowed Ichor", "Sequenced Fate", "Universal VIP Pass", "Primal Birthright" from the drop table when interactable removal is enabled.
+
 ## 1.0.8
 
 - Added a way to pause the game when item selection UI is displayed. Works in both singleplayer and multiplayer but when creating a multiplayer game, the host must enable multiplayer pause.

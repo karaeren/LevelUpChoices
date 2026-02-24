@@ -1,13 +1,12 @@
 using System;
-using RoR2;
 
-namespace LevelUpChoices
+namespace LevelUpChoices.Extensions
 {
-    internal class Integrations
+    public static class Integrations
     {
-        internal static bool lookingGlassEnabled = false;
+        public static bool lookingGlassEnabled = false;
 
-        internal static void Init()
+        public static void Init()
         {
             System.Collections.Generic.Dictionary<string, BepInEx.PluginInfo> pluginInfos = BepInEx.Bootstrap.Chainloader.PluginInfos;
 
