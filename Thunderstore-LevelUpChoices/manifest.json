@@ -1,6 +1,6 @@
 ﻿{
 	"name": "LevelUpChoices",
-	"version_number": "1.1.0",
+	"version_number": "1.1.1",
 	"website_url": "https://github.com/karaeren/LevelUpChoices",
 	"description": "Every level-up gives each player a choice of 3 items to pick from, with options to reroll or permanently banish items. Fully configurable. LookingGlass recommended.",
 	"dependencies": [

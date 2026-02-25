@@ -65,7 +65,19 @@ namespace LevelUpChoices
                     if (!playerStates.ContainsKey(netId))
                     {
                         playerStates[netId] = new PlayerState();
-                        bool isDrifter = player.body.bodyIndex == DLC3Content.BodyPrefabs.DrifterBody.bodyIndex;
+                        bool isDrifter = false;
+                        if (player.master && player.master.bodyPrefab)
+                        {
+                            var bodyComp = player.master.bodyPrefab.GetComponent<CharacterBody>();
+                            if (bodyComp)
+                            {
+                                isDrifter = bodyComp.bodyIndex == DLC3Content.BodyPrefabs.DrifterBody.bodyIndex;
+                            }
+                        }
+                        else if (player.body)
+                        {
+                            isDrifter = player.body.bodyIndex == DLC3Content.BodyPrefabs.DrifterBody.bodyIndex;
+                        }
                         playerStates[netId].DropTable.Initialize(isDrifter);
                     }
 

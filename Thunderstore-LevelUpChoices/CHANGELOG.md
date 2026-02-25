@@ -1,3 +1,7 @@
+## 1.1.1
+
+- Fixed a bug where clients on a multiplayer game would not get any item rolls.
+
 ## 1.1.0
 
 - Fixed a bug where some items weren't being disabled even though "remove interractables" option is set.

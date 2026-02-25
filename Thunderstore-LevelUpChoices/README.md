@@ -43,8 +43,12 @@ Each player has fully independent state — their own item options, their own ba
 
 ## Changelog
 
+## 1.1.1
+
+- Fixed a bug where clients on a multiplayer game would not get any item rolls.
+
 <details>
-<summary>Reveal</summary>
+<summary>Previous versions</summary>
 
 ## 1.1.0
 
