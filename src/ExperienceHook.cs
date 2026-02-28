@@ -31,7 +31,6 @@ namespace LevelUpChoices
         private static FieldInfo _teamLevelsField;
         private static FieldInfo _teamCurrentExpField;
         private static FieldInfo _teamNextExpField;
-        private static FieldInfo _syncVarDirtyBitsField;
 
         private void Awake()
         {
@@ -51,8 +50,6 @@ namespace LevelUpChoices
             _teamLevelsField = tm.GetField("teamLevels", BindingFlags.NonPublic | BindingFlags.Instance);
             _teamCurrentExpField = tm.GetField("teamCurrentLevelExperience", BindingFlags.NonPublic | BindingFlags.Instance);
             _teamNextExpField = tm.GetField("teamNextLevelExperience", BindingFlags.NonPublic | BindingFlags.Instance);
-
-            _syncVarDirtyBitsField = typeof(NetworkBehaviour).GetField("syncVarDirtyBits", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
         private void OnDestroy()
@@ -323,52 +320,43 @@ namespace LevelUpChoices
             uint oldLvl = self.GetTeamLevel(teamIndex);
             uint newLvl = TeamManager_FindLevelForExperience(null, exp);
 
-            if (oldLvl == newLvl)
-                return;
-
-            var members = TeamComponent.GetTeamMembers(teamIndex);
-            for (int i = 0; i < members.Count; i++)
+            if (oldLvl != newLvl)
             {
-                members[i].GetComponent<CharacterBody>()?.OnTeamLevelChanged();
-            }
-
-            var levelsArr = (uint[])_teamLevelsField?.GetValue(self);
-            if (levelsArr != null)
-                levelsArr[(int)teamIndex] = newLvl;
-
-            var currExpArr = (ulong[])_teamCurrentExpField?.GetValue(self);
-            if (currExpArr != null)
-                currExpArr[(int)teamIndex] = TeamManager_GetExperienceForLevel(null, newLvl);
-
-            var nextExpArr = (ulong[])_teamNextExpField?.GetValue(self);
-            if (nextExpArr != null)
-                nextExpArr[(int)teamIndex] = TeamManager_GetExperienceForLevel(null, newLvl + 1);
-
-            if (oldLvl < newLvl)
-            {
-                GlobalEventManager.OnTeamLevelUp(teamIndex);
-
-                if (teamIndex == TeamIndex.Player)
+                var members = TeamComponent.GetTeamMembers(teamIndex);
+                for (int i = 0; i < members.Count; i++)
                 {
-                    for (uint l = oldLvl + 1; l <= newLvl; l++)
+                    members[i].GetComponent<CharacterBody>()?.OnTeamLevelChanged();
+                }
+
+                var levelsArr = (uint[])_teamLevelsField?.GetValue(self);
+                if (levelsArr != null)
+                    levelsArr[(int)teamIndex] = newLvl;
+
+                var currExpArr = (ulong[])_teamCurrentExpField?.GetValue(self);
+                if (currExpArr != null)
+                    currExpArr[(int)teamIndex] = TeamManager_GetExperienceForLevel(null, newLvl);
+
+                var nextExpArr = (ulong[])_teamNextExpField?.GetValue(self);
+                if (nextExpArr != null)
+                    nextExpArr[(int)teamIndex] = TeamManager_GetExperienceForLevel(null, newLvl + 1);
+
+                if (oldLvl < newLvl)
+                {
+                    GlobalEventManager.OnTeamLevelUp(teamIndex);
+
+                    if (teamIndex == TeamIndex.Player)
                     {
-                        OnLevelUp?.Invoke(l);
+                        for (uint l = oldLvl + 1; l <= newLvl; l++)
+                        {
+                            OnLevelUp?.Invoke(l);
+                        }
                     }
                 }
             }
 
             if (NetworkServer.active)
             {
-                if (_syncVarDirtyBitsField != null)
-                {
-                    uint bits = (uint)_syncVarDirtyBitsField.GetValue(self);
-                    bits |= (uint)(1 << (int)teamIndex);
-                    _syncVarDirtyBitsField.SetValue(self, bits);
-                }
-                else
-                {
-                    self.SetDirtyBit((uint)(1 << (int)teamIndex));
-                }
+                self.SetDirtyBit((uint)(1 << (int)teamIndex));
             }
         }
     }
