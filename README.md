@@ -2,13 +2,13 @@
 
 ![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
 
-![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_config.png)
-
 This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
 
 Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
 
 Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game. It fully supports items added by 3rd party mods. LookingGlass mod is highly recommended!
+
+Contact me at Discord (@erenkara) for any bugs, suggestions etc...
 
 ## How it works
 
@@ -20,9 +20,11 @@ Almost anything such as disabling interactables, exp multipliers, rates of items
 
 Press **F3** at any time to open or close the selection menu.
 
+The items are chosen randomly based on the item tiers and your level. You can get lucky and proc a "synergy" item which will be synergistic to the items you own.
+
 ## Levels and XP
 
-XP scaling is eased to make it possible to reach higher levels, or even the max level. This way you'll have an adequate amount of items during each stage.
+You can configure the max level. By increasing the max level from 94, you can make each level easier or harder depending on the new max level.
 
 ## Mod Support
 

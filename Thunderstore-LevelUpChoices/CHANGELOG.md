@@ -5,6 +5,7 @@
 - Added luck calculation. Your positive or negative luck determines how many rolls each item slot will get and depending on the luck value, it will pick the best or worst items for you.
 - Added item similarity and synergy system. Items that are similar and synergistic to the items you own will have a higher chance of appearing in the item selection UI. Chances are configurable.
 - Added dotnet tooling and refactored some code.
+- Added max level configuration. Now instead of increasing the XP scaling, we increase the max level thus making each level easier or harder depending on the new max level.
 
 ## 1.1.1
 

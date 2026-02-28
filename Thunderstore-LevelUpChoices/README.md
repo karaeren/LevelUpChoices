@@ -2,7 +2,9 @@
 
 ![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_item_select.png)
 
-![Demo - Item Select](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_config.png)
+![Demo - Artifact](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_artifact.png)
+
+![Demo - Config](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_config.png)
 
 This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
 
@@ -22,9 +24,11 @@ Contact me at Discord (@erenkara) for any bugs, suggestions etc...
 
 Press **F3** at any time to open or close the selection menu.
 
+The items are chosen randomly based on the item tiers and your level. You can get lucky and proc a "synergy" item which will be synergistic to the items you own.
+
 ## Levels and XP
 
-XP scaling is eased to make it possible to reach higher levels, or even the max level. This way you'll have an adequate amount of items during each stage.
+You can configure the max level. By increasing the max level from 94, you can make each level easier or harder depending on the new max level.
 
 ## Mod Support
 
@@ -38,8 +42,7 @@ Each player has fully independent state — their own item options, their own ba
 
 ## TODO
 
-- Add "luck" integration.
-- Check if we can convert this into an artifact.
+- Everything is done! (for now)
 
 ## Changelog
 
@@ -50,6 +53,7 @@ Each player has fully independent state — their own item options, their own ba
 - Added luck calculation. Your positive or negative luck determines how many rolls each item slot will get and depending on the luck value, it will pick the best or worst items for you.
 - Added item similarity and synergy system. Items that are similar and synergistic to the items you own will have a higher chance of appearing in the item selection UI. Chances are configurable.
 - Added dotnet tooling and refactored some code.
+- Added max level configuration. Now instead of increasing the XP scaling, we increase the max level thus making each level easier or harder depending on the new max level.
 
 <details>
 <summary>Previous versions</summary>
