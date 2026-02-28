@@ -101,6 +101,8 @@ namespace LevelUpChoices
                         removedWeight += category.selectionWeight;
                         category.selectionWeight = 0f;
                     }
+
+                    selection.categories[i] = category;
                 }
             }
 
