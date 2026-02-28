@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using RoR2;
 using UnityEngine;
 
@@ -12,9 +12,57 @@ namespace LevelUpChoices
             SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         }
 
+        private static readonly HashSet<string> BlacklistedSpawns = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // https://github.com/risk-of-thunder/R2API/blob/master/R2API.Director/DirectorAPIhelpers.cs
+
+            // "iscscavbackpack", // rare
+            // "iscscavlunarbackpack", // rare
+
+            // "iscbarrel1", // useless but needed to reduce the amount of equipment barrels
+
+            // "iscequipmentbarrel", // only way to get equipment
+            // "isctripleshopequipment", // only way to get equipment
+            "isccasinochest",
+            "isccategorychestdamage",
+            "isccategorychesthealing",
+            "isccategorychestutility",
+            "iscchest1",
+            "iscchest1stealthed",
+            "iscchest2",
+            "iscduplicator",
+            "iscduplicatorlarge",
+            "iscduplicatormilitary",
+            "iscduplicatorwild",
+            "iscgoldchest",
+            "isclunarchest",
+            "iscscrapper",
+            "iscshrineblood", // gold is useless
+            "iscshrinebloodsandy",
+            "iscshrinebloodsnowy",
+            "iscshrinechance", // we don't want item spawns
+            "iscshrinechancesandy",
+            "iscshrinechancesnowy",
+            "iscshrinecleanse", // 3d printer for lunar items
+            "iscshrinecleansesandy",
+            "iscshrinecleansesnowy",
+            "iscshrinecombat", // just spawns mobs, no items
+            "iscshrinecombatsandy",
+            "iscshrinecombatsnowy",
+            "iscshrinerestack",
+            "iscshrinerestacksandy",
+            "iscshrinerestacksnowy",
+            "isctripleshop",
+            // "isctripleshopequipment", // allowed for equipments
+            "isctripleshoplarge",
+            "isccategorychest2damage",
+            "isccategorychest2healing",
+            "isccategorychest2utility"
+        };
+
         private void OnPrePopulateSceneServer(SceneDirector director)
         {
-            if (!ModConfig.ModEnabled.Value || !ModConfig.EnableInteractableRemoval.Value)
+            if (!ModConfig.IsModEnabled || !ModConfig.EnableInteractableRemoval.Value)
                 return;
             if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories)
                 return;
@@ -26,71 +74,33 @@ namespace LevelUpChoices
                 return;
             }
 
-            // https://github.com/risk-of-thunder/R2API/blob/master/R2API.Director/DirectorAPIhelpers.cs
-            // We will allow scavenger sacks since they are rare.
-            // string ScavengersSack = "iscscavbackpack";
-            // string ScavengersLunarSack = "iscscavlunarbackpack";
-
-            // We leave barrels on even though gold is mostly useless because
-            // on base game with no interactable mods, there isn't much to spawn so we see
-            // ton of equipment barrels which isn't balanced.
-            // string Barrel = "iscbarrel1";
-
-            string AdaptiveChest = "isccasinochest";
-            string ChestDamage = "isccategorychestdamage";
-            string ChestHealing = "isccategorychesthealing";
-            string ChestUtility = "isccategorychestutility";
-            string Chest = "iscchest1";
-            string CloakedChest = "iscchest1stealthed";
-            string LargeChest = "iscchest2";
-            string Printer3D = "iscduplicator";
-            string Printer3DLarge = "iscduplicatorlarge";
-            string PrinterMiliTech = "iscduplicatormilitary";
-            string PrinterOvergrown3D = "iscduplicatorwild";
-            // We will allow Equipment Barrels since they are the only way to get items from the mod currently
-            // but we will disable them if that ever changes and we have a way to differentiate them from regular barrels.
-            // string EquipmentBarrel = "iscequipmentbarrel";
-            string LegendaryChest = "iscgoldchest";
-            string LunarPod = "isclunarchest";
-            string Scrapper = "iscscrapper";
-            string ShrineOfBlood = "iscshrineblood"; // gold is useless
-            string ShrineOfBloodSandy = "iscshrinebloodsandy";
-            string ShrineOfBloodSnowy = "iscshrinebloodsnowy";
-            string ShrineOfChance = "iscshrinechance"; // we don't want item spawns
-            string ShrineOfChanceSandy = "iscshrinechancesandy";
-            string ShrineOfChanceSnowy = "iscshrinechancesnowy";
-            string CleansingPool = "iscshrinecleanse"; // 3d printer for lunar items
-            string CleansingPoolSandy = "iscshrinecleansesandy";
-            string CleansingPoolSnowy = "iscshrinecleansesnowy";
-            string ShrineOfCombat = "iscshrinecombat"; // just spawns mobs, no items
-            string ShrineOfCombatSandy = "iscshrinecombatsandy";
-            string ShrineOfCombatSnowy = "iscshrinecombatsnowy";
-            string ShrineOfOrder = "iscshrinerestack";
-            string ShrineOfOrderSandy = "iscshrinerestacksandy";
-            string ShrineOfOrderSnowy = "iscshrinerestacksnowy";
-            string TripleShop = "isctripleshop";
-            // string TripleShopEquipment = "isctripleshopequipment"; // allowed for equipments
-            string TripleShopLarge = "isctripleshoplarge";
-            string LargeChestDamage = "isccategorychest2damage";
-            string LargeChestHealing = "isccategorychest2healing";
-            string LargeChestUtility = "isccategorychest2utility";
-
-            string[] blacklistedSpawns = [
-                AdaptiveChest, ChestDamage, ChestHealing, ChestUtility, Chest, CloakedChest, LargeChest, Printer3D, Printer3DLarge, PrinterMiliTech, PrinterOvergrown3D,
-                LegendaryChest, LunarPod, Scrapper, ShrineOfBlood, ShrineOfBloodSandy, ShrineOfBloodSnowy, ShrineOfChance, ShrineOfChanceSandy, ShrineOfChanceSnowy, CleansingPool, CleansingPoolSandy, CleansingPoolSnowy,
-                ShrineOfCombat, ShrineOfCombatSandy, ShrineOfCombatSnowy, ShrineOfOrder, ShrineOfOrderSandy, ShrineOfOrderSnowy, TripleShop, TripleShopLarge, LargeChestDamage, LargeChestHealing, LargeChestUtility
-            ];
-
             float removedWeight = 0f;
 
             for (int i = 0; i < selection.categories.Length; i++)
             {
-                selection.categories[i].cards = selection.categories[i].cards.Where(c => !blacklistedSpawns.Contains(c.spawnCard.name, StringComparer.OrdinalIgnoreCase)).ToArray();
-                // If no cards left, set weight to 0
-                if (selection.categories[i].cards.Length == 0)
+                var category = selection.categories[i];
+                var originalCards = category.cards;
+                var filteredCards = new DirectorCard[originalCards.Length];
+                int filteredCount = 0;
+
+                for (int j = 0; j < originalCards.Length; j++)
                 {
-                    removedWeight += selection.categories[i].selectionWeight;
-                    selection.categories[i].selectionWeight = 0f;
+                    if (!BlacklistedSpawns.Contains(originalCards[j].spawnCard.name))
+                    {
+                        filteredCards[filteredCount++] = originalCards[j];
+                    }
+                }
+
+                if (filteredCount < originalCards.Length)
+                {
+                    Array.Resize(ref filteredCards, filteredCount);
+                    category.cards = filteredCards;
+
+                    if (filteredCount == 0)
+                    {
+                        removedWeight += category.selectionWeight;
+                        category.selectionWeight = 0f;
+                    }
                 }
             }
 

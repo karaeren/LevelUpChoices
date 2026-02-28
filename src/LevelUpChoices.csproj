@@ -4,6 +4,9 @@
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<LangVersion>preview</LangVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<AnalysisLevel>latest</AnalysisLevel>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -14,6 +17,8 @@
 
 		<PackageReference Include="BepInEx.Core" Version="5.4.21" />
 
+		<PackageReference Include="R2API.ContentManagement" Version="1.0.10" />
+		<PackageReference Include="R2API.Language" Version="1.1.0" />
 		<PackageReference Include="R2API.Networking" Version="1.0.3" />
 
 		<PackageReference Include="UnityEngine.Modules" Version="2021.3.33" IncludeAssets="compile" />
@@ -28,6 +33,12 @@
 	  <Reference Include="RiskOfOptions">
 	    <HintPath>Packages\RiskOfOptions.dll</HintPath>
 	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Assets\*.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

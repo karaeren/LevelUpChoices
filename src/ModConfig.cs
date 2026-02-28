@@ -10,47 +10,53 @@ namespace LevelUpChoices
     public static class ModConfig
     {
         // Shared
-        public static ConfigEntry<bool> ModEnabled;
-        public static ConfigEntry<bool> PauseOnItemSelect;
-        public static ConfigEntry<int> DebugPassword;
+        public static ConfigEntry<bool> AlwaysEnableMod { get; private set; }
+        public static ConfigEntry<bool> PauseOnItemSelect { get; private set; }
+        public static ConfigEntry<int> DebugPassword { get; private set; }
+
+        public static bool IsModEnabled => AlwaysEnableMod != null && (AlwaysEnableMod.Value || LevelUpArtifact.IsEnabled());
 
         // Client
-        public static ConfigEntry<KeyboardShortcut> ToggleMenuKey;
-        public static ConfigEntry<float> UIScale;
-        public static ConfigEntry<bool> ShowItemDescriptions;
-        public static ConfigEntry<bool> EnableNotifications;
+        public static ConfigEntry<KeyboardShortcut> ToggleMenuKey { get; private set; }
+        public static ConfigEntry<float> UIScale { get; private set; }
+        public static ConfigEntry<bool> ShowItemDescriptions { get; private set; }
+        public static ConfigEntry<bool> EnableNotifications { get; private set; }
 
         // Server
-        public static ConfigEntry<bool> EnableInteractableRemoval;
-        public static ConfigEntry<int> ItemChoiceCount;
-        public static ConfigEntry<float> ExperienceStartMultiplier;
-        public static ConfigEntry<float> ExperienceGrowthRate;
-        public static ConfigEntry<int> LevelsPerBanishToken;
-        public static ConfigEntry<int> StartingBanishTokens;
-        public static ConfigEntry<int> StartingRerollTokens;
-        public static ConfigEntry<bool> RerollTokenRefreshOnPick;
+        public static ConfigEntry<bool> EnableInteractableRemoval { get; private set; }
+        public static ConfigEntry<bool> EnableCustomLevelSystem { get; private set; }
+        public static ConfigEntry<bool> EnableMonsterLevelScaling { get; private set; }
+        public static ConfigEntry<int> MaxLevel { get; private set; }
+        public static ConfigEntry<int> ItemChoiceCount { get; private set; }
+        public static ConfigEntry<int> LevelsPerBanishToken { get; private set; }
+        public static ConfigEntry<int> StartingBanishTokens { get; private set; }
+        public static ConfigEntry<int> StartingRerollTokens { get; private set; }
+        public static ConfigEntry<bool> RerollTokenRefreshOnPick { get; private set; }
+        public static ConfigEntry<float> SimilarItemChance { get; private set; }
+        public static ConfigEntry<int> SimilarItemCount { get; private set; }
+        public static ConfigEntry<float> SimilarityThreshold { get; private set; }
 
         // Tier weights (early game – 0 tokens used)
-        public static ConfigEntry<float> EarlyWeightTier1;
-        public static ConfigEntry<float> EarlyWeightTier2;
-        public static ConfigEntry<float> EarlyWeightTier3;
-        public static ConfigEntry<float> EarlyWeightLunar;
-        public static ConfigEntry<float> EarlyWeightBoss;
+        public static ConfigEntry<float> EarlyWeightTier1 { get; private set; }
+        public static ConfigEntry<float> EarlyWeightTier2 { get; private set; }
+        public static ConfigEntry<float> EarlyWeightTier3 { get; private set; }
+        public static ConfigEntry<float> EarlyWeightLunar { get; private set; }
+        public static ConfigEntry<float> EarlyWeightBoss { get; private set; }
 
         // Tier weights (late game – 30+ tokens used)
-        public static ConfigEntry<float> LateWeightTier1;
-        public static ConfigEntry<float> LateWeightTier2;
-        public static ConfigEntry<float> LateWeightTier3;
-        public static ConfigEntry<float> LateWeightLunar;
-        public static ConfigEntry<float> LateWeightBoss;
+        public static ConfigEntry<float> LateWeightTier1 { get; private set; }
+        public static ConfigEntry<float> LateWeightTier2 { get; private set; }
+        public static ConfigEntry<float> LateWeightTier3 { get; private set; }
+        public static ConfigEntry<float> LateWeightLunar { get; private set; }
+        public static ConfigEntry<float> LateWeightBoss { get; private set; }
 
         public static void Init(ConfigFile config, BepInEx.PluginInfo pluginInfo)
         {
 
             // Shared
-            ModEnabled = config.Bind(
-                            "Shared", "Mod Enabled", true,
-                            "Master toggle – when disabled the mod does nothing.");
+            AlwaysEnableMod = config.Bind(
+                            "Shared", "Always Enable Mod", false,
+                            "Enables LevelUpChoices regardless of artifact usage. Works in modes where Artifacts are disabled too!");
 
             PauseOnItemSelect = config.Bind(
                 "Shared", "Pause On Item Select", true,
@@ -82,17 +88,22 @@ namespace LevelUpChoices
                             "Server", "Remove Chests & Interactables", true,
                             "Remove chests, printers, shrines and other item-giving interactables from stages.");
 
+            EnableCustomLevelSystem = config.Bind(
+                "Server", "Enable Level System", true,
+                "Use it to unlock the 94 level cap and use a custom XP curve.");
+
+            EnableMonsterLevelScaling = config.Bind(
+                "Server", "Enable Monster Level Scaling", true,
+                "Scale monster levels based on Max Level. Keeps enemies relevant at high player levels.");
+
+            MaxLevel = config.Bind(
+                "Server", "Max Level", 256,
+                new ConfigDescription("Determines the absolute max level achievable. The XP will automatically scale. A very high max level means first few levels will be very easy.",
+                new AcceptableValueRange<int>(94, 9999)));
+
             ItemChoiceCount = config.Bind(
                 "Server", "Item Choices", 3,
                 "Number of item choices presented on each level up.");
-
-            ExperienceStartMultiplier = config.Bind(
-                "Server", "XP Start Multiplier", 1.69f,
-                "Experience multiplier applied at level 1.");
-
-            ExperienceGrowthRate = config.Bind(
-                "Server", "XP Growth Rate", 1.169f,
-                "Multiplier compounded per level (effective mult = Start * Growth^(level-1)).");
 
             LevelsPerBanishToken = config.Bind(
                 "Server", "Levels Per Banish Token", 10,
@@ -109,6 +120,18 @@ namespace LevelUpChoices
             RerollTokenRefreshOnPick = config.Bind(
                 "Server", "Reroll Token Refresh On Pick", true,
                 "When enabled, the player's reroll token is restored to 1 after picking an item.");
+
+            SimilarItemChance = config.Bind(
+                "Server", "Similar Item Chance", 30f,
+                "Chance (0-100) for a rolled item to be replaced with an item similar to one you already own.");
+
+            SimilarItemCount = config.Bind(
+                "Server", "Similar Item Count", 8,
+                "Number of similar items to map per item (5 to 20). Requires restart.");
+
+            SimilarityThreshold = config.Bind(
+                "Server", "Similarity Threshold", 0.15f,
+                "The minimum TF-IDF cosine similarity score required (0.0 to 1.0) for two items to be considered similar.");
 
             // Early tier weights
             EarlyWeightTier1 = config.Bind("Server", "Early Weight – Common", 79f,
@@ -167,7 +190,7 @@ namespace LevelUpChoices
 
         private static void RegisterSharedOptions()
         {
-            ModSettingsManager.AddOption(new CheckBoxOption(ModEnabled));
+            ModSettingsManager.AddOption(new CheckBoxOption(AlwaysEnableMod));
             ModSettingsManager.AddOption(new CheckBoxOption(PauseOnItemSelect));
             ModSettingsManager.AddOption(new IntSliderOption(DebugPassword,
                 new IntSliderConfig { min = 1, max = 9999 }));
@@ -188,15 +211,14 @@ namespace LevelUpChoices
         private static void RegisterServerOptions()
         {
             ModSettingsManager.AddOption(new CheckBoxOption(EnableInteractableRemoval));
+            ModSettingsManager.AddOption(new CheckBoxOption(EnableCustomLevelSystem));
+            ModSettingsManager.AddOption(new CheckBoxOption(EnableMonsterLevelScaling));
+
+            ModSettingsManager.AddOption(new IntSliderOption(MaxLevel,
+                            new IntSliderConfig { min = 94, max = 9999 }));
 
             ModSettingsManager.AddOption(new IntSliderOption(ItemChoiceCount,
                 new IntSliderConfig { min = 1, max = 10 }));
-
-            ModSettingsManager.AddOption(new StepSliderOption(ExperienceStartMultiplier,
-                new StepSliderConfig { min = 0.5f, max = 5.0f, increment = 0.01f }));
-
-            ModSettingsManager.AddOption(new StepSliderOption(ExperienceGrowthRate,
-                new StepSliderConfig { min = 1.0f, max = 2.0f, increment = 0.001f }));
 
             ModSettingsManager.AddOption(new IntSliderOption(LevelsPerBanishToken,
                 new IntSliderConfig { min = 1, max = 50 }));
@@ -208,6 +230,15 @@ namespace LevelUpChoices
                 new IntSliderConfig { min = 0, max = 10 }));
 
             ModSettingsManager.AddOption(new CheckBoxOption(RerollTokenRefreshOnPick));
+
+            ModSettingsManager.AddOption(new SliderOption(SimilarItemChance,
+                new SliderConfig { min = 0f, max = 100f, FormatString = "{0:0}%" }));
+
+            ModSettingsManager.AddOption(new IntSliderOption(SimilarItemCount,
+                new IntSliderConfig { min = 5, max = 20 }));
+
+            ModSettingsManager.AddOption(new SliderOption(SimilarityThreshold,
+                new SliderConfig { min = 0f, max = 1f, FormatString = "{0:0.00}" }));
 
             // Early weights
             ModSettingsManager.AddOption(new SliderOption(EarlyWeightTier1,

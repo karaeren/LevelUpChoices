@@ -34,7 +34,7 @@ namespace LevelUpChoices
 
                     if (NetworkServer.active)
                     {
-                        TeamManager.instance.GiveTeamExperience(TeamIndex.Player, (TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player)) / 6);
+                        TeamManager.instance.GiveTeamExperience(TeamIndex.Player, (TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player)) + 1);
                         Log.Info("Granted debug XP");
                     }
                 }

@@ -153,7 +153,7 @@ namespace LevelUpChoices
                     _ => 0f
                 };
 
-                int count = _tierCounts.TryGetValue(kv.Value, out int c) ? c : 1;
+                int count = _tierCounts.TryGetValue(kv.Value, out int c) ? c : 0;
                 _weights[kv.Key] = count > 0 ? tierWeight / count : 0f;
             }
         }
@@ -176,7 +176,53 @@ namespace LevelUpChoices
         }
 
         // Pick a random item by weight.
-        public ItemIndex Roll(ICollection<ItemIndex> exclude = null)
+        public bool CanDrop(ItemIndex item)
+        {
+            return _weights.TryGetValue(item, out float w) && w > 0f;
+        }
+
+        public ItemIndex Roll(float luck = 0f, ICollection<ItemIndex> exclude = null)
+        {
+            int extraRolls = Mathf.FloorToInt(Mathf.Abs(luck));
+            if (Random.value < Mathf.Abs(luck) - extraRolls)
+            {
+                extraRolls++;
+            }
+            int rolls = 1 + extraRolls;
+
+            ItemIndex bestResult = ItemIndex.None;
+            int bestTierValue = luck >= 0 ? int.MinValue : int.MaxValue;
+
+            for (int i = 0; i < rolls; i++)
+            {
+                ItemIndex roll = RollSingle(exclude);
+                if (roll == ItemIndex.None)
+                    continue;
+
+                int tierValue = GetTierValue(_tiers[roll]);
+
+                if (luck >= 0)
+                {
+                    if (tierValue > bestTierValue)
+                    {
+                        bestTierValue = tierValue;
+                        bestResult = roll;
+                    }
+                }
+                else
+                {
+                    if (tierValue < bestTierValue)
+                    {
+                        bestTierValue = tierValue;
+                        bestResult = roll;
+                    }
+                }
+            }
+
+            return bestResult != ItemIndex.None ? bestResult : RollSingle(exclude);
+        }
+
+        private ItemIndex RollSingle(ICollection<ItemIndex> exclude = null)
         {
             // Compute total weight of eligible items
             float total = 0f;
@@ -209,6 +255,23 @@ namespace LevelUpChoices
 
             // Floating-point edge case: return last valid item
             return last;
+        }
+
+        private int GetTierValue(ItemTier tier)
+        {
+            return tier switch
+            {
+                ItemTier.Tier1 => 1,
+                ItemTier.Tier2 => 2,
+                ItemTier.Tier3 => 3,
+                ItemTier.Boss => 4,
+                ItemTier.Lunar => 4,
+                ItemTier.VoidTier1 => 1,
+                ItemTier.VoidTier2 => 2,
+                ItemTier.VoidTier3 => 3,
+                ItemTier.VoidBoss => 4,
+                _ => 0
+            };
         }
     }
 }

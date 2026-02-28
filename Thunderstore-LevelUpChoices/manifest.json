@@ -5,6 +5,8 @@
 	"description": "Every level-up gives each player a choice of 3 items to pick from, with options to reroll or permanently banish items. Fully configurable. LookingGlass recommended.",
 	"dependencies": [
 		"RiskofThunder-R2API_Networking-1.0.3",
+		"RiskofThunder-R2API_Language-1.1.0",
+		"RiskofThunder-R2API_ContentManagement-1.0.10",
 		"Rune580-Risk_Of_Options-2.8.5"
 	]
 }

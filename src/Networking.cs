@@ -51,22 +51,25 @@ namespace LevelUpChoices
         public class SyncItems : INetMessage
         {
             List<PickupIndex> pickupIndices;
+            List<ItemIndex> synergizedItems;
             NetworkInstanceId targetNetId;
 
             public SyncItems() { }
-            public SyncItems(NetworkInstanceId targetNetId, List<PickupIndex> pickupIndices)
+            public SyncItems(NetworkInstanceId targetNetId, List<PickupIndex> pickupIndices, List<ItemIndex> synergizedItems)
             {
                 this.targetNetId = targetNetId;
                 this.pickupIndices = pickupIndices;
+                this.synergizedItems = synergizedItems ?? new List<ItemIndex>(new ItemIndex[pickupIndices.Count]);
             }
 
             public void Serialize(NetworkWriter writer)
             {
                 writer.Write(targetNetId);
                 writer.Write(pickupIndices.Count);
-                foreach (var index in pickupIndices)
+                for (int i = 0; i < pickupIndices.Count; i++)
                 {
-                    writer.Write(index);
+                    writer.Write(pickupIndices[i]);
+                    writer.Write(synergizedItems != null && i < synergizedItems.Count ? (int)synergizedItems[i] : (int)ItemIndex.None);
                 }
             }
 
@@ -74,10 +77,12 @@ namespace LevelUpChoices
             {
                 targetNetId = reader.ReadNetworkId();
                 pickupIndices = [];
+                synergizedItems = [];
                 int count = reader.ReadInt32();
                 for (int i = 0; i < count; i++)
                 {
                     pickupIndices.Add(reader.ReadPickupIndex());
+                    synergizedItems.Add((ItemIndex)reader.ReadInt32());
                 }
             }
 
@@ -85,7 +90,7 @@ namespace LevelUpChoices
             {
                 if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == targetNetId)
                 {
-                    LevelUpManager.Instance.UpdateAvailableItems(pickupIndices);
+                    LevelUpManager.Instance.UpdateAvailableItems(pickupIndices, synergizedItems);
                 }
             }
         }
