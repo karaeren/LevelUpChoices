@@ -43,12 +43,20 @@ Each player has fully independent state — their own item options, their own ba
 
 ## Changelog
 
-## 1.1.1
+### 1.1.2
 
-- Fixed a bug where clients on a multiplayer game would not get any item rolls.
+- Refactored UI and some parts of the codebase.
+- Added an artifact for the mod. Now you need to choose the artifact in-game to enable the mod. Or you can use the "Always Enable" config to use it like before.
+- Added luck calculation. Your positive or negative luck determines how many rolls each item slot will get and depending on the luck value, it will pick the best or worst items for you.
+- Added item similarity and synergy system. Items that are similar and synergistic to the items you own will have a higher chance of appearing in the item selection UI. Chances are configurable.
+- Added dotnet tooling and refactored some code.
 
 <details>
 <summary>Previous versions</summary>
+
+## 1.1.1
+
+- Fixed a bug where clients on a multiplayer game would not get any item rolls.
 
 ## 1.1.0
 
