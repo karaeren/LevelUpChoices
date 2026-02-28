@@ -182,9 +182,6 @@ namespace LevelUpChoices.UI
             if (IsVisible)
                 return;
 
-            if (pauseIntegration != null && pauseIntegration.IsPaused)
-                return;
-
             IsVisible = true;
 
             float scale = ModConfig.UIScale.Value;
