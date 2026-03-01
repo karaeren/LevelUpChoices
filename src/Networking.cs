@@ -226,5 +226,41 @@ namespace LevelUpChoices
                 }
             }
         }
+
+        public class SyncConfig : INetMessage
+        {
+            int maxLevel;
+            bool enableMonsterLevelScaling;
+            bool enableCustomLevelSystem;
+
+            public SyncConfig() { }
+            public SyncConfig(int maxLevel, bool enableMonsterLevelScaling, bool enableCustomLevelSystem)
+            {
+                this.maxLevel = maxLevel;
+                this.enableMonsterLevelScaling = enableMonsterLevelScaling;
+                this.enableCustomLevelSystem = enableCustomLevelSystem;
+            }
+
+            public void Serialize(NetworkWriter writer)
+            {
+                writer.Write(maxLevel);
+                writer.Write(enableMonsterLevelScaling);
+                writer.Write(enableCustomLevelSystem);
+            }
+
+            public void Deserialize(NetworkReader reader)
+            {
+                maxLevel = reader.ReadInt32();
+                enableMonsterLevelScaling = reader.ReadBoolean();
+                enableCustomLevelSystem = reader.ReadBoolean();
+            }
+
+            public void OnReceived()
+            {
+                if (NetworkServer.active)
+                    return;
+                ModConfig.UpdateServerConfig(maxLevel, enableMonsterLevelScaling, enableCustomLevelSystem);
+            }
+        }
     }
 }

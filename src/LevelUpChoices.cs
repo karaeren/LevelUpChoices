@@ -25,7 +25,7 @@ namespace LevelUpChoices
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.1.2";
+        public const string PluginVersion = "1.1.3";
 
         public void Awake()
         {
@@ -33,9 +33,11 @@ namespace LevelUpChoices
 
             // Initialize configuration and Risk Of Options UI
             ModConfig.Init(Config, Info);
-            LevelUpArtifact.Init(Info);
+            Artifacts.ChoiceArtifact.Init(Info);
+            Artifacts.EqualityArtifact.Init(Info);
             ItemCatalog.availability.CallWhenAvailable(Integrations.Init);
             ItemCatalog.availability.CallWhenAvailable(ItemSimilarityManager.Initialize);
+            ItemCatalog.availability.CallWhenAvailable(Artifacts.EqualityArtifact.InitItems);
 
             // Register Network Messages
             NetworkingAPI.RegisterMessageType<Networking.SyncPlayerState>();
@@ -44,6 +46,7 @@ namespace LevelUpChoices
             NetworkingAPI.RegisterMessageType<Networking.SendBanish>();
             NetworkingAPI.RegisterMessageType<Networking.SendReroll>();
             NetworkingAPI.RegisterMessageType<Networking.SendPickingState>();
+            NetworkingAPI.RegisterMessageType<Networking.SyncConfig>();
 
             // Init Managers
             var logicObject = new GameObject("LevelUpLogic");

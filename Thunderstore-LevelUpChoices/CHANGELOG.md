@@ -1,3 +1,9 @@
+## 1.1.3
+
+- Added a new artifact called "Artifact of Equality". When enabled, monsters will get a new item every time they level up. After all, we're all equal in death.
+- Previously monster level scaling was taking place but it wasn't showing in the game UI. Now it correctly shows the real value.
+- Added config syncing from host to clients.
+
 ## 1.1.2
 
 - Refactored UI and some parts of the codebase.

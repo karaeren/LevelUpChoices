@@ -46,7 +46,16 @@ Each player has fully independent state — their own item options, their own ba
 
 ## Changelog
 
-### 1.1.2
+### 1.1.3
+
+- Added a new artifact called "Artifact of Equality". When enabled, monsters will get a new item every time they level up. After all, we're all equal in death.
+- Previously monster level scaling was taking place but it wasn't showing in the game UI. Now it correctly shows the real value.
+- Added config syncing from host to clients.
+
+<details>
+<summary>Previous versions</summary>
+
+## 1.1.2
 
 - Refactored UI and some parts of the codebase.
 - Added an artifact for the mod. Now you need to choose the artifact in-game to enable the mod. Or you can use the "Always Enable" config to use it like before.
@@ -54,9 +63,6 @@ Each player has fully independent state — their own item options, their own ba
 - Added item similarity and synergy system. Items that are similar and synergistic to the items you own will have a higher chance of appearing in the item selection UI. Chances are configurable.
 - Added dotnet tooling and refactored some code.
 - Added max level configuration. Now instead of increasing the XP scaling, we increase the max level thus making each level easier or harder depending on the new max level.
-
-<details>
-<summary>Previous versions</summary>
 
 ## 1.1.1
 

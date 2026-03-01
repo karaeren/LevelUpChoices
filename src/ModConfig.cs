@@ -14,7 +14,7 @@ namespace LevelUpChoices
         public static ConfigEntry<bool> PauseOnItemSelect { get; private set; }
         public static ConfigEntry<int> DebugPassword { get; private set; }
 
-        public static bool IsModEnabled => AlwaysEnableMod != null && (AlwaysEnableMod.Value || LevelUpArtifact.IsEnabled());
+        public static bool IsModEnabled => AlwaysEnableMod != null && (AlwaysEnableMod.Value || Artifacts.ChoiceArtifact.IsEnabled());
 
         // Client
         public static ConfigEntry<KeyboardShortcut> ToggleMenuKey { get; private set; }
@@ -27,6 +27,34 @@ namespace LevelUpChoices
         public static ConfigEntry<bool> EnableCustomLevelSystem { get; private set; }
         public static ConfigEntry<bool> EnableMonsterLevelScaling { get; private set; }
         public static ConfigEntry<int> MaxLevel { get; private set; }
+
+        public static int MaxLevelValue => _maxLevelOverride ?? MaxLevel.Value;
+        private static int? _maxLevelOverride;
+
+        public static bool EnableMonsterLevelScalingValue => _enableMonsterLevelScalingOverride ?? EnableMonsterLevelScaling.Value;
+        private static bool? _enableMonsterLevelScalingOverride;
+
+        public static bool EnableCustomLevelSystemValue => _enableCustomLevelSystemOverride ?? EnableCustomLevelSystem.Value;
+        private static bool? _enableCustomLevelSystemOverride;
+
+        public static void UpdateServerConfig(int maxLevel, bool monsterScaling, bool customLevel)
+        {
+            _maxLevelOverride = maxLevel;
+            _enableMonsterLevelScalingOverride = monsterScaling;
+            _enableCustomLevelSystemOverride = customLevel;
+            Log.Info($"Server config synced: MaxLevel={maxLevel}, MonsterScaling={monsterScaling}, CustomLevel={customLevel}");
+            OnServerConfigSynced?.Invoke();
+        }
+
+        public static void ResetServerConfig()
+        {
+            _maxLevelOverride = null;
+            _enableMonsterLevelScalingOverride = null;
+            _enableCustomLevelSystemOverride = null;
+        }
+
+        public static event System.Action OnServerConfigSynced;
+
         public static ConfigEntry<int> ItemChoiceCount { get; private set; }
         public static ConfigEntry<int> LevelsPerBanishToken { get; private set; }
         public static ConfigEntry<int> StartingBanishTokens { get; private set; }

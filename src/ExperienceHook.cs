@@ -2,6 +2,8 @@ using System;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using BepInEx;
+using R2API.Networking;
+using R2API.Networking.Interfaces;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -12,7 +14,7 @@ namespace LevelUpChoices
     {
         public static event Action<uint> OnLevelUp;
 
-        private int MaxLevel => ModConfig.MaxLevel.Value;
+        private int MaxLevel => ModConfig.MaxLevelValue;
 
         private ulong[] customExperienceTable;
         private uint customNaturalLevelCap;
@@ -39,7 +41,34 @@ namespace LevelUpChoices
             ModConfig.EnableCustomLevelSystem.SettingChanged += OnSettingsChanged;
             ModConfig.EnableMonsterLevelScaling.SettingChanged += OnSettingsChanged;
             ModConfig.MaxLevel.SettingChanged += OnSettingsChanged;
+            ModConfig.OnServerConfigSynced += OnServerConfigSynced;
 
+            Run.onRunStartGlobal += OnRunStartGlobal;
+            Run.onRunDestroyGlobal += OnRunDestroyGlobal;
+
+            OnSettingsChanged(null, null);
+        }
+
+        private void OnServerConfigSynced()
+        {
+            OnSettingsChanged(null, null);
+        }
+
+        private static void SyncConfigAsServer()
+        {
+            if (NetworkServer.active)
+            {
+                new Networking.SyncConfig(ModConfig.MaxLevel.Value, ModConfig.EnableMonsterLevelScaling.Value, ModConfig.EnableCustomLevelSystem.Value).Send(R2API.Networking.NetworkDestination.Clients);
+            }
+        }
+        private void OnRunStartGlobal(Run run)
+        {
+            SyncConfigAsServer();
+        }
+
+        private void OnRunDestroyGlobal(Run run)
+        {
+            ModConfig.ResetServerConfig();
             OnSettingsChanged(null, null);
         }
 
@@ -61,12 +90,21 @@ namespace LevelUpChoices
             On.RoR2.TeamManager.SetTeamLevel -= TeamManager_SetTeamLevel;
 
             On.RoR2.CharacterBody.RecalculateStats -= CharacterBody_RecalculateStats;
+            On.RoR2.UI.AmbientLevelDisplay.Update -= AmbientLevelDisplay_Update;
+
+            ModConfig.EnableCustomLevelSystem.SettingChanged -= OnSettingsChanged;
+            ModConfig.EnableMonsterLevelScaling.SettingChanged -= OnSettingsChanged;
+            ModConfig.MaxLevel.SettingChanged -= OnSettingsChanged;
+            ModConfig.OnServerConfigSynced -= OnServerConfigSynced;
+
+            Run.onRunStartGlobal -= OnRunStartGlobal;
+            Run.onRunDestroyGlobal -= OnRunDestroyGlobal;
         }
 
         private void OnSettingsChanged(object sender, object args)
         {
-            bool enableCustomLevelSystem = ModConfig.EnableCustomLevelSystem.Value;
-            bool enableMonsterLevelScaling = ModConfig.EnableMonsterLevelScaling.Value;
+            bool enableCustomLevelSystem = ModConfig.EnableCustomLevelSystemValue;
+            bool enableMonsterLevelScaling = ModConfig.EnableMonsterLevelScalingValue;
 
             if (enableCustomLevelSystem)
             {
@@ -85,11 +123,13 @@ namespace LevelUpChoices
                 if (enableMonsterLevelScaling && !lastEnableMonsterLevelScaling)
                 {
                     On.RoR2.CharacterBody.RecalculateStats += CharacterBody_RecalculateStats;
+                    On.RoR2.UI.AmbientLevelDisplay.Update += AmbientLevelDisplay_Update;
                     Log.Info("Monster level scaling enabled.");
                 }
                 else if (!enableMonsterLevelScaling && lastEnableMonsterLevelScaling)
                 {
                     On.RoR2.CharacterBody.RecalculateStats -= CharacterBody_RecalculateStats;
+                    On.RoR2.UI.AmbientLevelDisplay.Update -= AmbientLevelDisplay_Update;
                     Log.Info("Monster level scaling disabled.");
                 }
             }
@@ -106,6 +146,7 @@ namespace LevelUpChoices
                     if (lastEnableMonsterLevelScaling)
                     {
                         On.RoR2.CharacterBody.RecalculateStats -= CharacterBody_RecalculateStats;
+                        On.RoR2.UI.AmbientLevelDisplay.Update -= AmbientLevelDisplay_Update;
                     }
 
                     customExperienceTable = null;
@@ -116,13 +157,30 @@ namespace LevelUpChoices
             lastEnableCustomLevelSystem = enableCustomLevelSystem;
             lastEnableMonsterLevelScaling = enableMonsterLevelScaling;
             lastMaxLevel = MaxLevel;
+
+            SyncConfigAsServer();
+        }
+
+        public static int GetCurrentMonsterLevel()
+        {
+            if (!Run.instance)
+                return 1;
+
+            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled)
+            {
+                float scaleFactor = (float)ModConfig.MaxLevelValue / 94f; // Vanilla max level is 94
+                int ambientFloor = Run.instance.ambientLevelFloor;
+                int scaledAmbient = Mathf.FloorToInt(ambientFloor * scaleFactor);
+                return Mathf.Min(scaledAmbient, ModConfig.MaxLevelValue);
+            }
+            return Run.instance.ambientLevelFloor;
         }
 
         private void CharacterBody_RecalculateStats(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self)
         {
             orig(self);
 
-            if (!Run.instance || !ModConfig.EnableMonsterLevelScaling.Value || !ModConfig.IsModEnabled)
+            if (!Run.instance || !ModConfig.EnableMonsterLevelScalingValue || !ModConfig.IsModEnabled)
                 return;
 
             if (self.teamComponent == null)
@@ -136,12 +194,17 @@ namespace LevelUpChoices
             if (!usesAmbient)
                 return;
 
-            float scaleFactor = (float)MaxLevel / 94; // Vanilla max level is 94
-            int ambientFloor = Run.instance.ambientLevelFloor;
-            int scaledAmbient = Mathf.FloorToInt(ambientFloor * scaleFactor);
-            scaledAmbient = Mathf.Min(scaledAmbient, MaxLevel);
+            self.level = Mathf.Max(self.level, GetCurrentMonsterLevel());
+        }
 
-            self.level = Mathf.Max(self.level, scaledAmbient);
+        private static void AmbientLevelDisplay_Update(On.RoR2.UI.AmbientLevelDisplay.orig_Update orig, RoR2.UI.AmbientLevelDisplay self)
+        {
+            orig(self);
+            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled && Run.instance)
+            {
+                int scaledLevel = GetCurrentMonsterLevel();
+                self.text.text = Language.GetStringFormatted("AMBIENT_LEVEL_DISPLAY_FORMAT", scaledLevel.ToString());
+            }
         }
 
         private double CalculateOptimalMultiplier(uint maxLevel)
