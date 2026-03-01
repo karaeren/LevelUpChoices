@@ -7,12 +7,9 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace LevelUpChoices
-{
-    public class DebugManager : MonoBehaviour
-    {
-        private static bool CheckDebugEnabled()
-        {
+namespace LevelUpChoices {
+    public class DebugManager : MonoBehaviour {
+        private static bool CheckDebugEnabled() {
             if (ModConfig.DebugPassword == null)
                 return false;
             // Stupid check to avoid accidentally leaving debug code enabled
@@ -22,41 +19,33 @@ namespace LevelUpChoices
             return true;
         }
 
-        private static void Update()
-        {
-            try
-            {
+        private static void Update() {
+            try {
 
-                if (Input.GetKeyDown(KeyCode.F2))
-                {
+                if (Input.GetKeyDown(KeyCode.F2)) {
                     if (!CheckDebugEnabled())
                         return;
 
-                    if (NetworkServer.active)
-                    {
+                    if (NetworkServer.active) {
                         TeamManager.instance.GiveTeamExperience(TeamIndex.Player, (TeamManager.instance.GetTeamNextLevelExperience(TeamIndex.Player) - TeamManager.instance.GetTeamCurrentLevelExperience(TeamIndex.Player)) + 1);
                         Log.Info("Granted debug XP");
                     }
                 }
-                else if (Input.GetKeyDown(KeyCode.F4))
-                {
+                else if (Input.GetKeyDown(KeyCode.F4)) {
                     if (!CheckDebugEnabled())
                         return;
 
                     DumpAllItemsToJson();
                 }
             }
-            catch (Exception e)
-            {
+            catch (Exception e) {
                 Log.Error(e);
             }
         }
 
         // Writes a comprehensive JSON diagnostic dump of every item and equipment in the game.
-        private static void DumpAllItemsToJson()
-        {
-            try
-            {
+        private static void DumpAllItemsToJson() {
+            try {
                 var sb = new StringBuilder();
                 sb.AppendLine("{");
 
@@ -77,8 +66,7 @@ namespace LevelUpChoices
                     ItemTier.VoidTier1, ItemTier.VoidTier2, ItemTier.VoidTier3,
                     ItemTier.VoidBoss, ItemTier.AssignedAtRuntime
                 ];
-                foreach (ItemTier tier in allTiers)
-                {
+                foreach (ItemTier tier in allTiers) {
                     if (!firstTier)
                         sb.AppendLine(",");
                     firstTier = false;
@@ -86,8 +74,7 @@ namespace LevelUpChoices
                     sb.AppendLine("    {");
                     sb.AppendLine($"      \"tier\": \"{tier}\",");
                     sb.AppendLine($"      \"tierDefExists\": {Bool(td != null)},");
-                    if (td != null)
-                    {
+                    if (td != null) {
                         sb.AppendLine($"      \"isDroppable\": {Bool(td.isDroppable)},");
                         sb.AppendLine($"      \"canScrap\": {Bool(td.canScrap)},");
                         sb.AppendLine($"      \"canRestack\": {Bool(td.canRestack)},");
@@ -98,8 +85,7 @@ namespace LevelUpChoices
                         sb.AppendLine($"      \"highlightPrefab\": \"{Esc(td.highlightPrefab != null ? td.highlightPrefab.name : "null")}\",");
                         sb.AppendLine($"      \"dropletDisplayPrefab\": \"{Esc(td.dropletDisplayPrefab != null ? td.dropletDisplayPrefab.name : "null")}\"");
                     }
-                    else
-                    {
+                    else {
                         sb.AppendLine($"      \"_note\": \"ItemTierDef is null for this tier\"");
                     }
                     sb.Append("    }");
@@ -110,8 +96,7 @@ namespace LevelUpChoices
                 // ========== ALL ITEMS ==========
                 sb.AppendLine("  \"items\": [");
                 bool firstItem = true;
-                foreach (ItemIndex index in ItemCatalog.allItems)
-                {
+                foreach (ItemIndex index in ItemCatalog.allItems) {
                     if (!firstItem)
                         sb.AppendLine(",");
                     firstItem = false;
@@ -123,8 +108,7 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"itemIndex\": {(int)index},");
                     sb.AppendLine($"      \"itemDefExists\": {Bool(!isNull)},");
 
-                    if (isNull)
-                    {
+                    if (isNull) {
                         sb.AppendLine($"      \"skipReason\": \"DEF_NULL\"");
                         sb.Append("    }");
                         continue;
@@ -148,15 +132,13 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"tier\": \"{def.tier}\",");
                     ItemTierDef tierDef = ItemTierCatalog.GetItemTierDef(def.tier);
                     sb.AppendLine($"      \"tierDef\": {{");
-                    if (tierDef != null)
-                    {
+                    if (tierDef != null) {
                         sb.AppendLine($"        \"isDroppable\": {Bool(tierDef.isDroppable)},");
                         sb.AppendLine($"        \"canScrap\": {Bool(tierDef.canScrap)},");
                         sb.AppendLine($"        \"canRestack\": {Bool(tierDef.canRestack)},");
                         sb.AppendLine($"        \"pickupRules\": \"{tierDef.pickupRules}\"");
                     }
-                    else
-                    {
+                    else {
                         sb.AppendLine($"        \"_note\": \"null\"");
                     }
                     sb.AppendLine($"      }},");
@@ -185,11 +167,9 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"pickup\": {{");
                     sb.AppendLine($"        \"pickupIndex\": {pickupIdx.value},");
                     sb.AppendLine($"        \"hasPickup\": {Bool(hasPickup)},");
-                    if (hasPickup)
-                    {
+                    if (hasPickup) {
                         PickupDef pdef = PickupCatalog.GetPickupDef(pickupIdx);
-                        if (pdef != null)
-                        {
+                        if (pdef != null) {
                             sb.AppendLine($"        \"internalName\": \"{Esc(pdef.internalName)}\",");
                             sb.AppendLine($"        \"nameToken\": \"{Esc(pdef.nameToken)}\",");
                             sb.AppendLine($"        \"interactContextToken\": \"{Esc(pdef.interactContextToken)}\",");
@@ -205,13 +185,11 @@ namespace LevelUpChoices
                             sb.AppendLine($"        \"displayPrefab\": \"{Esc(pdef.displayPrefab != null ? pdef.displayPrefab.name : "null")}\",");
                             sb.AppendLine($"        \"dropletDisplayPrefab\": \"{Esc(pdef.dropletDisplayPrefab != null ? pdef.dropletDisplayPrefab.name : "null")}\"");
                         }
-                        else
-                        {
+                        else {
                             sb.AppendLine($"        \"_note\": \"PickupDef is null despite valid PickupIndex\"");
                         }
                     }
-                    else
-                    {
+                    else {
                         sb.AppendLine($"        \"_note\": \"no pickup entry\"");
                     }
                     sb.AppendLine($"      }},");
@@ -219,10 +197,8 @@ namespace LevelUpChoices
                     // --- Run availability ---
                     bool runAvailable = false;
                     bool runExists = false;
-                    try
-                    {
-                        if (Run.instance != null)
-                        {
+                    try {
+                        if (Run.instance != null) {
                             runExists = true;
                             runAvailable = Run.instance.availableItems.Contains(index);
                         }
@@ -271,8 +247,7 @@ namespace LevelUpChoices
                 // ========== ALL EQUIPMENT ==========
                 sb.AppendLine("  \"equipment\": [");
                 bool firstEquip = true;
-                foreach (EquipmentIndex eqIdx in EquipmentCatalog.allEquipment)
-                {
+                foreach (EquipmentIndex eqIdx in EquipmentCatalog.allEquipment) {
                     if (!firstEquip)
                         sb.AppendLine(",");
                     firstEquip = false;
@@ -282,8 +257,7 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"equipmentIndex\": {(int)eqIdx},");
                     sb.AppendLine($"      \"equipmentDefExists\": {Bool(edef != null)},");
 
-                    if (edef == null)
-                    {
+                    if (edef == null) {
                         sb.AppendLine($"      \"_note\": \"EquipmentDef is null\"");
                         sb.Append("    }");
                         continue;
@@ -332,16 +306,14 @@ namespace LevelUpChoices
                 File.WriteAllText(path, sb.ToString());
                 Log.Info($"Item dump written to {path}");
             }
-            catch (System.Exception e)
-            {
+            catch (System.Exception e) {
                 Log.Error(e);
             }
         }
 
         private static string Bool(bool v) => v ? "true" : "false";
 
-        private static string Esc(string s)
-        {
+        private static string Esc(string s) {
             if (string.IsNullOrEmpty(s))
                 return "";
 
@@ -350,10 +322,8 @@ namespace LevelUpChoices
                     .Replace("\t", "\\t");
         }
 
-        private static string SafeGetString(string token)
-        {
-            try
-            {
+        private static string SafeGetString(string token) {
+            try {
                 if (string.IsNullOrEmpty(token))
                     return "";
                 return Language.GetString(token) ?? "";

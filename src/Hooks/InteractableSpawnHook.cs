@@ -3,12 +3,9 @@ using System.Collections.Generic;
 using RoR2;
 using UnityEngine;
 
-namespace LevelUpChoices.Hooks
-{
-    public class InteractableSpawnHook : MonoBehaviour
-    {
-        private void Start()
-        {
+namespace LevelUpChoices.Hooks {
+    public class InteractableSpawnHook : MonoBehaviour {
+        private void Start() {
             SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         }
 
@@ -60,44 +57,37 @@ namespace LevelUpChoices.Hooks
             "isccategorychest2utility"
         };
 
-        private void OnPrePopulateSceneServer(SceneDirector director)
-        {
+        private void OnPrePopulateSceneServer(SceneDirector director) {
             if (!ModConfig.IsModEnabled || !ModConfig.EnableInteractableRemoval.Value)
                 return;
             if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories)
                 return;
 
             DirectorCardCategorySelection selection = ClassicStageInfo.instance.interactableCategories;
-            if (!selection)
-            {
+            if (!selection) {
                 Log.Error("No interactable categories found on ClassicStageInfo!");
                 return;
             }
 
             float removedWeight = 0f;
 
-            for (int i = 0; i < selection.categories.Length; i++)
-            {
+            for (int i = 0; i < selection.categories.Length; i++) {
                 DirectorCardCategorySelection.Category category = selection.categories[i];
                 DirectorCard[] originalCards = category.cards;
                 var filteredCards = new DirectorCard[originalCards.Length];
                 int filteredCount = 0;
 
-                for (int j = 0; j < originalCards.Length; j++)
-                {
-                    if (!s_blacklistedSpawns.Contains(originalCards[j].spawnCard.name))
-                    {
+                for (int j = 0; j < originalCards.Length; j++) {
+                    if (!s_blacklistedSpawns.Contains(originalCards[j].spawnCard.name)) {
                         filteredCards[filteredCount++] = originalCards[j];
                     }
                 }
 
-                if (filteredCount < originalCards.Length)
-                {
+                if (filteredCount < originalCards.Length) {
                     Array.Resize(ref filteredCards, filteredCount);
                     category.cards = filteredCards;
 
-                    if (filteredCount == 0)
-                    {
+                    if (filteredCount == 0) {
                         removedWeight += category.selectionWeight;
                         category.selectionWeight = 0f;
                     }
@@ -107,10 +97,8 @@ namespace LevelUpChoices.Hooks
             }
 
             // Give removed weight to barrels since they are useless
-            for (int i = 0; i < selection.categories.Length; i++)
-            {
-                if (selection.categories[i].name.Equals("Barrels", StringComparison.OrdinalIgnoreCase))
-                {
+            for (int i = 0; i < selection.categories.Length; i++) {
+                if (selection.categories[i].name.Equals("Barrels", StringComparison.OrdinalIgnoreCase)) {
                     selection.categories[i].selectionWeight += removedWeight;
                     break;
                 }

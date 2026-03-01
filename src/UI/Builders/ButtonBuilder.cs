@@ -6,10 +6,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace LevelUpChoices.UI.Builders
-{
-    public class ButtonBuilder(UIAssetService assetService)
-    {
+namespace LevelUpChoices.UI.Builders {
+    public class ButtonBuilder(UIAssetService assetService) {
         private readonly UIAssetService _assetService = assetService;
 
         public static GameObject CreateAbsoluteButton(
@@ -21,8 +19,7 @@ namespace LevelUpChoices.UI.Builders
             Vector2 offsetMax,
             Color bgColor,
             Color accentColor,
-            UnityEngine.Events.UnityAction callback)
-        {
+            UnityEngine.Events.UnityAction callback) {
             var go = new GameObject(label + "Btn");
             go.transform.SetParent(parent, false);
             go.AddComponent<LayoutElement>().ignoreLayout = true;

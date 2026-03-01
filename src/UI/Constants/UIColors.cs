@@ -1,9 +1,7 @@
 using UnityEngine;
 
-namespace LevelUpChoices.UI.Constants
-{
-    public static class UIColors
-    {
+namespace LevelUpChoices.UI.Constants {
+    public static class UIColors {
 
         public static readonly Color GoldAccent = new(1f, 0.84f, 0.22f);
         public static readonly Color DarkPanelBg = new(0.06f, 0.06f, 0.09f, 0.95f);
@@ -28,8 +26,7 @@ namespace LevelUpChoices.UI.Constants
         public static readonly Color AbsoluteButtonPressed = new(0.5f, 0.5f, 0.5f, 1f);
         public static readonly Color AbsoluteButtonSelected = Color.white;
 
-        public static Color GetIconBackgroundColor(Color tierColor)
-        {
+        public static Color GetIconBackgroundColor(Color tierColor) {
             return new Color(tierColor.r * 0.5f, tierColor.g * 0.5f, tierColor.b * 0.5f, 0.4f);
         }
     }

@@ -15,10 +15,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-namespace LevelUpChoices.UI
-{
-    public class ItemSelectUI : MonoBehaviour
-    {
+namespace LevelUpChoices.UI {
+    public class ItemSelectUI : MonoBehaviour {
         public static ItemSelectUI Instance { get; private set; }
 
         public bool IsVisible { get; private set; } = false;
@@ -39,8 +37,7 @@ namespace LevelUpChoices.UI
         private float _lastClickTime = 0f;
         private const float ClickCooldown = 0.15f;
 
-        private void Awake()
-        {
+        private void Awake() {
             if (Instance)
                 Destroy(Instance);
             Instance = this;
@@ -52,8 +49,7 @@ namespace LevelUpChoices.UI
             BuildUI();
         }
 
-        private void BuildUI()
-        {
+        private void BuildUI() {
             _canvasObject = new GameObject("LevelUpCanvas");
             DontDestroyOnLoad(_canvasObject);
             Canvas canvas = _canvasObject.AddComponent<Canvas>();
@@ -169,16 +165,14 @@ namespace LevelUpChoices.UI
             notifPanel.SetActive(false);
         }
 
-        public void UpdateTokens()
-        {
+        public void UpdateTokens() {
             _tokenHeader?.UpdateTokens(
                 LevelUpManager.Instance.AvailableTokens,
                 LevelUpManager.Instance.BanishTokens,
                 LevelUpManager.Instance.RerollTokens);
         }
 
-        public void ShowChoices(List<PickupIndex> pickupIndices, List<ItemIndex> synergies = null)
-        {
+        public void ShowChoices(List<PickupIndex> pickupIndices, List<ItemIndex> synergies = null) {
             if (IsVisible)
                 return;
 
@@ -198,15 +192,13 @@ namespace LevelUpChoices.UI
             GamePauseManager.Pause();
         }
 
-        public void UpdateOptions(List<PickupIndex> pickupIndices, List<ItemIndex> synergies = null)
-        {
+        public void UpdateOptions(List<PickupIndex> pickupIndices, List<ItemIndex> synergies = null) {
             if (_itemRow == null)
                 return;
 
             _itemRow.ClearCards();
 
-            for (int i = 0; i < pickupIndices.Count; i++)
-            {
+            for (int i = 0; i < pickupIndices.Count; i++) {
                 int slotIndex = i;
                 PickupIndex pickupIndex = pickupIndices[i];
                 ItemIndex synergy = synergies != null && i < synergies.Count ? synergies[i] : ItemIndex.None;
@@ -227,8 +219,7 @@ namespace LevelUpChoices.UI
             LayoutRebuilder.ForceRebuildLayoutImmediate(_containerObject.GetComponent<RectTransform>());
         }
 
-        public void Hide()
-        {
+        public void Hide() {
             if (!IsVisible)
                 return;
             IsVisible = false;
@@ -236,43 +227,37 @@ namespace LevelUpChoices.UI
             StartCoroutine(HideNextFrame());
         }
 
-        private IEnumerator HideNextFrame()
-        {
+        private IEnumerator HideNextFrame() {
             yield return null;
             EventSystem.current?.SetSelectedGameObject(null);
             _containerObject.SetActive(false);
             _backdrop?.Hide();
         }
 
-        public void ShowNotification()
-        {
+        public void ShowNotification() {
             if (!ModConfig.EnableNotifications.Value)
                 return;
             string keyName = ModConfig.ToggleMenuKey.Value.MainKey.ToString();
             _notification?.Show(LevelUpManager.Instance.AvailableTokens, keyName);
         }
 
-        private void Update()
-        {
+        private void Update() {
             bool isGamePaused = (_pauseIntegration != null && _pauseIntegration.IsPaused) || Time.timeScale == 0f;
             bool showNotif = ModConfig.EnableNotifications.Value
                 && LevelUpManager.Instance != null
                 && LevelUpManager.Instance.AvailableTokens > 0
                 && !IsVisible && !isGamePaused;
 
-            if (showNotif && _notification != null)
-            {
+            if (showNotif && _notification != null) {
                 string keyName = ModConfig.ToggleMenuKey.Value.MainKey.ToString();
                 _notification.Show(LevelUpManager.Instance.AvailableTokens, keyName);
             }
-            else
-            {
+            else {
                 _notification?.Hide();
             }
         }
 
-        private void OnItemClicked(PickupIndex pickupIndex)
-        {
+        private void OnItemClicked(PickupIndex pickupIndex) {
             if (Time.unscaledTime - _lastClickTime < ClickCooldown)
                 return;
             _lastClickTime = Time.unscaledTime;
@@ -287,19 +272,16 @@ namespace LevelUpChoices.UI
                 return;
             NetworkInstanceId netId = localUsers[0].netId;
 
-            if (NetworkServer.active)
-            {
+            if (NetworkServer.active) {
                 LevelUpManager.Instance.HandlePlayerSelection(netId, pickupIndex);
             }
-            else
-            {
+            else {
                 new Networking.SendItemSelection(pickupIndex, netId)
                     .Send(R2API.Networking.NetworkDestination.Server);
             }
         }
 
-        private void OnBanishClicked(int slotIndex)
-        {
+        private void OnBanishClicked(int slotIndex) {
             if (LevelUpManager.Instance.BanishTokens <= 0)
                 return;
 
@@ -310,19 +292,16 @@ namespace LevelUpChoices.UI
                 return;
             NetworkInstanceId netId = localUsers[0].netId;
 
-            if (NetworkServer.active)
-            {
+            if (NetworkServer.active) {
                 LevelUpManager.Instance.HandlePlayerBanish(netId, slotIndex);
             }
-            else
-            {
+            else {
                 new Networking.SendBanish(slotIndex, netId)
                     .Send(R2API.Networking.NetworkDestination.Server);
             }
         }
 
-        private void OnRerollClicked(int slotIndex)
-        {
+        private void OnRerollClicked(int slotIndex) {
             if (LevelUpManager.Instance.RerollTokens <= 0)
                 return;
 
@@ -333,12 +312,10 @@ namespace LevelUpChoices.UI
                 return;
             NetworkInstanceId netId = localUsers[0].netId;
 
-            if (NetworkServer.active)
-            {
+            if (NetworkServer.active) {
                 LevelUpManager.Instance.HandlePlayerReroll(netId, slotIndex);
             }
-            else
-            {
+            else {
                 new Networking.SendReroll(slotIndex, netId)
                     .Send(R2API.Networking.NetworkDestination.Server);
             }

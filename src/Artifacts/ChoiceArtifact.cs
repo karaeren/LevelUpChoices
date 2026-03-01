@@ -4,10 +4,8 @@ using RoR2;
 using RoR2.ContentManagement;
 using UnityEngine;
 
-namespace LevelUpChoices.Artifacts
-{
-    public class ChoiceArtifact : IContentPackProvider
-    {
+namespace LevelUpChoices.Artifacts {
+    public class ChoiceArtifact : IContentPackProvider {
         public static ArtifactDef ArtifactDef { get; private set; }
 
         private static string s_basePath;
@@ -16,15 +14,13 @@ namespace LevelUpChoices.Artifacts
 
         public string identifier => "LevelUpChoices.ChoiceArtifact";
 
-        public IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
-        {
+        public IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args) {
             ArtifactDef = ScriptableObject.CreateInstance<ArtifactDef>();
             ArtifactDef.cachedName = "ARTIFACT_CHOICE";
             ArtifactDef.nameToken = "ARTIFACT_CHOICE_NAME";
             ArtifactDef.descriptionToken = "ARTIFACT_CHOICE_DESC";
 
-            if (!string.IsNullOrEmpty(s_basePath))
-            {
+            if (!string.IsNullOrEmpty(s_basePath)) {
                 string onPath = System.IO.Path.Combine(s_basePath, "Assets", "AoC_On.png");
                 string offPath = System.IO.Path.Combine(s_basePath, "Assets", "AoC_Off.png");
 
@@ -38,10 +34,8 @@ namespace LevelUpChoices.Artifacts
             yield break;
         }
 
-        private static Sprite LoadSprite(string path)
-        {
-            if (System.IO.File.Exists(path))
-            {
+        private static Sprite LoadSprite(string path) {
+            if (System.IO.File.Exists(path)) {
                 byte[] bytes = System.IO.File.ReadAllBytes(path);
                 Texture2D tex = new(256, 256, TextureFormat.ARGB32, false, false);
                 tex.LoadImage(bytes);
@@ -51,21 +45,18 @@ namespace LevelUpChoices.Artifacts
             return null;
         }
 
-        public IEnumerator GenerateContentPackAsync(GetContentPackAsyncArgs args)
-        {
+        public IEnumerator GenerateContentPackAsync(GetContentPackAsyncArgs args) {
             ContentPack.Copy(contentPack, args.output);
             args.ReportProgress(1f);
             yield break;
         }
 
-        public IEnumerator FinalizeAsync(FinalizeAsyncArgs args)
-        {
+        public IEnumerator FinalizeAsync(FinalizeAsyncArgs args) {
             args.ReportProgress(1f);
             yield break;
         }
 
-        internal static void Init(BepInEx.PluginInfo pluginInfo)
-        {
+        internal static void Init(BepInEx.PluginInfo pluginInfo) {
             s_basePath = System.IO.Path.GetDirectoryName(pluginInfo.Location);
 
             LanguageAPI.Add("ARTIFACT_CHOICE_NAME", "Artifact of Choice");
@@ -74,15 +65,12 @@ namespace LevelUpChoices.Artifacts
             ContentManager.collectContentPackProviders += ContentManager_collectContentPackProviders;
         }
 
-        private static void ContentManager_collectContentPackProviders(ContentManager.AddContentPackProviderDelegate addContentPackProvider)
-        {
+        private static void ContentManager_collectContentPackProviders(ContentManager.AddContentPackProviderDelegate addContentPackProvider) {
             addContentPackProvider(new ChoiceArtifact());
         }
 
-        public static bool IsEnabled()
-        {
-            if (RunArtifactManager.instance && ArtifactDef)
-            {
+        public static bool IsEnabled() {
+            if (RunArtifactManager.instance && ArtifactDef) {
                 return RunArtifactManager.instance.IsArtifactEnabled(ArtifactDef);
             }
             return false;

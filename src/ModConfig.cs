@@ -5,10 +5,8 @@ using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
 using UnityEngine;
 
-namespace LevelUpChoices
-{
-    public static class ModConfig
-    {
+namespace LevelUpChoices {
+    public static class ModConfig {
         // Shared
         public static ConfigEntry<bool> AlwaysEnableMod { get; private set; }
         public static ConfigEntry<bool> PauseOnItemSelect { get; private set; }
@@ -37,8 +35,7 @@ namespace LevelUpChoices
         public static bool EnableCustomLevelSystemValue => s_enableCustomLevelSystemOverride ?? EnableCustomLevelSystem.Value;
         private static bool? s_enableCustomLevelSystemOverride;
 
-        public static void UpdateServerConfig(int maxLevel, bool monsterScaling, bool customLevel)
-        {
+        public static void UpdateServerConfig(int maxLevel, bool monsterScaling, bool customLevel) {
             s_maxLevelOverride = maxLevel;
             s_enableMonsterLevelScalingOverride = monsterScaling;
             s_enableCustomLevelSystemOverride = customLevel;
@@ -46,8 +43,7 @@ namespace LevelUpChoices
             OnServerConfigSynced?.Invoke();
         }
 
-        public static void ResetServerConfig()
-        {
+        public static void ResetServerConfig() {
             s_maxLevelOverride = null;
             s_enableMonsterLevelScalingOverride = null;
             s_enableCustomLevelSystemOverride = null;
@@ -78,8 +74,7 @@ namespace LevelUpChoices
         public static ConfigEntry<float> LateWeightLunar { get; private set; }
         public static ConfigEntry<float> LateWeightBoss { get; private set; }
 
-        public static void Init(ConfigFile config, BepInEx.PluginInfo pluginInfo)
-        {
+        public static void Init(ConfigFile config, BepInEx.PluginInfo pluginInfo) {
 
             // Shared
             AlwaysEnableMod = config.Bind(
@@ -188,13 +183,11 @@ namespace LevelUpChoices
             // Register with Risk Of Options
             ModSettingsManager.SetModDescription("Level Up Choices – pick items when your team levels up.");
 
-            try
-            {
+            try {
                 string pluginDir = System.IO.Path.GetDirectoryName(pluginInfo.Location);
                 string folderName = System.IO.Path.Combine(pluginDir, "icons");
                 string[] files = Directory.GetFiles(folderName);
-                if (files.Length > 0)
-                {
+                if (files.Length > 0) {
                     string file = files[0];
                     byte[] bytes = File.ReadAllBytes(file);
                     Texture2D tex = new(256, 256, TextureFormat.ARGB32, false, false);
@@ -204,8 +197,7 @@ namespace LevelUpChoices
                     ModSettingsManager.SetModIcon(icon);
                 }
             }
-            catch (System.Exception e)
-            {
+            catch (System.Exception e) {
                 Log.Warning($"Failed to load mod icon: {e.Message}");
             }
 
@@ -216,8 +208,7 @@ namespace LevelUpChoices
 
         // Risk Of Options registration
 
-        private static void RegisterSharedOptions()
-        {
+        private static void RegisterSharedOptions() {
             ModSettingsManager.AddOption(new CheckBoxOption(AlwaysEnableMod));
             ModSettingsManager.AddOption(new CheckBoxOption(PauseOnItemSelect));
             ModSettingsManager.AddOption(new IntSliderOption(DebugPassword,
@@ -225,8 +216,7 @@ namespace LevelUpChoices
 
         }
 
-        private static void RegisterClientOptions()
-        {
+        private static void RegisterClientOptions() {
             ModSettingsManager.AddOption(new KeyBindOption(ToggleMenuKey));
 
             ModSettingsManager.AddOption(new StepSliderOption(UIScale,
@@ -236,8 +226,7 @@ namespace LevelUpChoices
             ModSettingsManager.AddOption(new CheckBoxOption(EnableNotifications));
         }
 
-        private static void RegisterServerOptions()
-        {
+        private static void RegisterServerOptions() {
             ModSettingsManager.AddOption(new CheckBoxOption(EnableInteractableRemoval));
             ModSettingsManager.AddOption(new CheckBoxOption(EnableCustomLevelSystem));
             ModSettingsManager.AddOption(new CheckBoxOption(EnableMonsterLevelScaling));

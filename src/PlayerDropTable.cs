@@ -3,13 +3,11 @@ using System.Linq;
 using RoR2;
 using UnityEngine;
 
-namespace LevelUpChoices
-{
+namespace LevelUpChoices {
     // Per-player drop table backed by a Dictionary<ItemIndex, float>.
     // Weights are recalculated lazily when UsedTokens changes.
     // Banished items are permanently removed from the table.
-    public class PlayerDropTable
-    {
+    public class PlayerDropTable {
         public static readonly HashSet<string> BannedItemNames =
         [
             // Base game
@@ -26,15 +24,13 @@ namespace LevelUpChoices
 
         // Build the table from all valid items in ItemCatalog and compute initial weights.
         // Call once per run when the player's state is first created.
-        public void Initialize(bool enableScraps = false)
-        {
+        public void Initialize(bool enableScraps = false) {
             _weights.Clear();
             _tiers.Clear();
             _tierCounts.Clear();
             _lastCalculatedTokens = -1;
 
-            foreach (ItemIndex index in ItemCatalog.allItems)
-            {
+            foreach (ItemIndex index in ItemCatalog.allItems) {
                 string skipReason = null;
                 ItemDef def = ItemCatalog.GetItemDef(index);
 
@@ -60,10 +56,8 @@ namespace LevelUpChoices
 
                 bool runAvailable = false;
                 bool runExists = false;
-                try
-                {
-                    if (Run.instance != null)
-                    {
+                try {
+                    if (Run.instance != null) {
                         runExists = true;
                         runAvailable = Run.instance.availableItems.Contains(index);
                     }
@@ -83,8 +77,7 @@ namespace LevelUpChoices
                 else if (!runAvailable)
                     skipReason = "NOT_AVAILABLE_IN_RUN";
 
-                if (skipReason != null)
-                {
+                if (skipReason != null) {
                     Log.Debug($"Skipping {def?.name ?? index.ToString()} - {skipReason}");
                     continue;
                 }
@@ -103,8 +96,7 @@ namespace LevelUpChoices
         // Update every item's weight based on the current UsedTokens value.
         // Skips recalculation if tokens>30 (late game) and weights are already at the cap,
         // or if UsedTokens hasn't changed since last call.
-        public void RecalculateWeights(int usedTokens)
-        {
+        public void RecalculateWeights(int usedTokens) {
             if (usedTokens == _lastCalculatedTokens)
                 return;
             if (usedTokens > 30 && _lastCalculatedTokens >= 30)
@@ -141,10 +133,8 @@ namespace LevelUpChoices
             float wBoss = Mathf.Lerp(earlyBoss, Mathf.Lerp(midBoss, lateBoss, t2to3), t1to2);
 
             // Use cached tiers — no GetItemDef calls, no list allocation
-            foreach (KeyValuePair<ItemIndex, ItemTier> kv in _tiers)
-            {
-                float tierWeight = kv.Value switch
-                {
+            foreach (KeyValuePair<ItemIndex, ItemTier> kv in _tiers) {
+                float tierWeight = kv.Value switch {
                     ItemTier.Tier1 => w1,
                     ItemTier.Tier2 => w2,
                     ItemTier.Tier3 => w3,
@@ -160,8 +150,7 @@ namespace LevelUpChoices
 
         // Permanently remove an item from the table (banish) and immediately
         // redistribute its tier's weight across remaining items.
-        public void Remove(ItemIndex item)
-        {
+        public void Remove(ItemIndex item) {
             if (!_tiers.TryGetValue(item, out ItemTier tier))
                 return;
 
@@ -176,16 +165,13 @@ namespace LevelUpChoices
         }
 
         // Pick a random item by weight.
-        public bool CanDrop(ItemIndex item)
-        {
+        public bool CanDrop(ItemIndex item) {
             return _weights.TryGetValue(item, out float w) && w > 0f;
         }
 
-        public ItemIndex Roll(float luck = 0f, ICollection<ItemIndex> exclude = null)
-        {
+        public ItemIndex Roll(float luck = 0f, ICollection<ItemIndex> exclude = null) {
             int extraRolls = Mathf.FloorToInt(Mathf.Abs(luck));
-            if (Random.value < Mathf.Abs(luck) - extraRolls)
-            {
+            if (Random.value < Mathf.Abs(luck) - extraRolls) {
                 extraRolls++;
             }
             int rolls = 1 + extraRolls;
@@ -193,26 +179,21 @@ namespace LevelUpChoices
             ItemIndex bestResult = ItemIndex.None;
             int bestTierValue = luck >= 0 ? int.MinValue : int.MaxValue;
 
-            for (int i = 0; i < rolls; i++)
-            {
+            for (int i = 0; i < rolls; i++) {
                 ItemIndex roll = RollSingle(exclude);
                 if (roll == ItemIndex.None)
                     continue;
 
                 int tierValue = GetTierValue(_tiers[roll]);
 
-                if (luck >= 0)
-                {
-                    if (tierValue > bestTierValue)
-                    {
+                if (luck >= 0) {
+                    if (tierValue > bestTierValue) {
                         bestTierValue = tierValue;
                         bestResult = roll;
                     }
                 }
-                else
-                {
-                    if (tierValue < bestTierValue)
-                    {
+                else {
+                    if (tierValue < bestTierValue) {
                         bestTierValue = tierValue;
                         bestResult = roll;
                     }
@@ -222,19 +203,16 @@ namespace LevelUpChoices
             return bestResult != ItemIndex.None ? bestResult : RollSingle(exclude);
         }
 
-        private ItemIndex RollSingle(ICollection<ItemIndex> exclude = null)
-        {
+        private ItemIndex RollSingle(ICollection<ItemIndex> exclude = null) {
             // Compute total weight of eligible items
             float total = 0f;
-            foreach (KeyValuePair<ItemIndex, float> kv in _weights)
-            {
+            foreach (KeyValuePair<ItemIndex, float> kv in _weights) {
                 if (exclude != null && exclude.Contains(kv.Key))
                     continue;
                 total += kv.Value;
             }
 
-            if (total <= 0f)
-            {
+            if (total <= 0f) {
                 Log.Warning("No eligible items to roll!");
                 return ItemIndex.None;
             }
@@ -243,8 +221,7 @@ namespace LevelUpChoices
             float cumulative = 0f;
             ItemIndex last = ItemIndex.None;
 
-            foreach (KeyValuePair<ItemIndex, float> kv in _weights)
-            {
+            foreach (KeyValuePair<ItemIndex, float> kv in _weights) {
                 if (exclude != null && exclude.Contains(kv.Key))
                     continue;
                 cumulative += kv.Value;
@@ -257,10 +234,8 @@ namespace LevelUpChoices
             return last;
         }
 
-        private static int GetTierValue(ItemTier tier)
-        {
-            return tier switch
-            {
+        private static int GetTierValue(ItemTier tier) {
+            return tier switch {
                 ItemTier.Tier1 => 1,
                 ItemTier.Tier2 => 2,
                 ItemTier.Tier3 => 3,

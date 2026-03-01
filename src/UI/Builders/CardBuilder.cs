@@ -9,10 +9,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace LevelUpChoices.UI.Builders
-{
-    public class CardBuilder(UIAssetService assetService)
-    {
+namespace LevelUpChoices.UI.Builders {
+    public class CardBuilder(UIAssetService assetService) {
         private readonly UIAssetService _assetService = assetService;
         private readonly ButtonBuilder _buttonBuilder = new(assetService);
         private readonly UIElementBuilder _elementBuilder = new(assetService);
@@ -24,15 +22,13 @@ namespace LevelUpChoices.UI.Builders
             ItemIndex synergy,
             Action<PickupIndex> onItemClicked,
             Action<int> onBanishClicked,
-            Action<int> onRerollClicked)
-        {
+            Action<int> onRerollClicked) {
             PickupDef pickupDef = PickupCatalog.GetPickupDef(pickupIndex);
             ItemDef itemDef = ItemCatalog.GetItemDef(pickupDef?.itemIndex ?? ItemIndex.None);
 
             Color tierColor = Color.white;
 
-            if (itemDef != null)
-            {
+            if (itemDef != null) {
                 ItemTierDef tierDef = ItemTierCatalog.GetItemTierDef(itemDef.tier);
                 if (tierDef != null)
                     tierColor = ColorCatalog.GetColor(tierDef.colorIndex);
@@ -42,8 +38,7 @@ namespace LevelUpChoices.UI.Builders
             card.transform.SetParent(parent, false);
 
             Image cardImg = card.AddComponent<Image>();
-            if (_assetService.PanelSprite != null)
-            {
+            if (_assetService.PanelSprite != null) {
                 cardImg.sprite = _assetService.PanelSprite;
                 cardImg.type = Image.Type.Sliced;
             }
@@ -104,11 +99,9 @@ namespace LevelUpChoices.UI.Builders
             string displayName = itemDef != null ? Language.GetString(itemDef.nameToken) : "Unknown";
             displayName += ownedCount > 0 ? $"  <style=cIsHealing>({ownedCount})</style>" : "";
 
-            if (synergy != ItemIndex.None)
-            {
+            if (synergy != ItemIndex.None) {
                 ItemDef synergyDef = ItemCatalog.GetItemDef(synergy);
-                if (synergyDef != null)
-                {
+                if (synergyDef != null) {
                     string synergyName = Language.GetString(synergyDef.nameToken);
                     string synergyColor = ColorUtility.ToHtmlStringRGB(tierColor);
                     displayName += $"\n<size=14><color=#FFFFFF>Synergizes with <color=#{synergyColor}>{synergyName}</color></color></size>";
@@ -127,8 +120,7 @@ namespace LevelUpChoices.UI.Builders
             nameLabelGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             // Description
-            if (ModConfig.ShowItemDescriptions.Value && itemDef != null)
-            {
+            if (ModConfig.ShowItemDescriptions.Value && itemDef != null) {
                 string lgDesc = Integrations.LookingGlassEnabled
                     ? LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true)
                     : null;

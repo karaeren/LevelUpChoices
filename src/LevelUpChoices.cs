@@ -7,8 +7,7 @@ using R2API.Utils;
 using RoR2;
 using UnityEngine;
 
-namespace LevelUpChoices
-{
+namespace LevelUpChoices {
     // Dependencies
     [BepInDependency(NetworkingAPI.PluginGUID)]
     [BepInDependency(LanguageAPI.PluginGUID)]
@@ -20,15 +19,13 @@ namespace LevelUpChoices
     [NetworkCompatibility(CompatibilityLevel.EveryoneMustHaveMod, VersionStrictness.EveryoneNeedSameModVersion)]
 
     [BepInPlugin(PluginGUID, PluginName, PluginVersion)]
-    public class LevelUpChoices : BaseUnityPlugin
-    {
+    public class LevelUpChoices : BaseUnityPlugin {
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
         public const string PluginVersion = "1.1.3";
 
-        public void Awake()
-        {
+        public void Awake() {
             Log.Init(Logger);
 
             // Initialize configuration and Risk Of Options UI

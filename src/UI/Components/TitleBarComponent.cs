@@ -5,12 +5,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LevelUpChoices.UI.Components
-{
-    public static class TitleBarComponent
-    {
-        public static GameObject Create(Transform parent)
-        {
+namespace LevelUpChoices.UI.Components {
+    public static class TitleBarComponent {
+        public static GameObject Create(Transform parent) {
             var container = new GameObject("TitleBarContainer");
             container.transform.SetParent(parent, false);
 

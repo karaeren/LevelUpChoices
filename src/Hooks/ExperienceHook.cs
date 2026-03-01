@@ -6,10 +6,8 @@ using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace LevelUpChoices.Hooks
-{
-    public class ExperienceHook : MonoBehaviour
-    {
+namespace LevelUpChoices.Hooks {
+    public class ExperienceHook : MonoBehaviour {
         public static event Action<uint> OnLevelUp;
 
         private static int MaxLevel => ModConfig.MaxLevelValue;
@@ -32,8 +30,7 @@ namespace LevelUpChoices.Hooks
         private static FieldInfo s_teamCurrentExpField;
         private static FieldInfo s_teamNextExpField;
 
-        private void Awake()
-        {
+        private void Awake() {
             CacheReflectionFields();
 
             ModConfig.EnableCustomLevelSystem.SettingChanged += OnSettingsChanged;
@@ -47,31 +44,25 @@ namespace LevelUpChoices.Hooks
             OnSettingsChanged(null, null);
         }
 
-        private void OnServerConfigSynced()
-        {
+        private void OnServerConfigSynced() {
             OnSettingsChanged(null, null);
         }
 
-        private static void SyncConfigAsServer()
-        {
-            if (NetworkServer.active)
-            {
+        private static void SyncConfigAsServer() {
+            if (NetworkServer.active) {
                 new Networking.SyncConfig(ModConfig.MaxLevel.Value, ModConfig.EnableMonsterLevelScaling.Value, ModConfig.EnableCustomLevelSystem.Value).Send(R2API.Networking.NetworkDestination.Clients);
             }
         }
-        private void OnRunStartGlobal(Run run)
-        {
+        private void OnRunStartGlobal(Run run) {
             SyncConfigAsServer();
         }
 
-        private void OnRunDestroyGlobal(Run run)
-        {
+        private void OnRunDestroyGlobal(Run run) {
             ModConfig.ResetServerConfig();
             OnSettingsChanged(null, null);
         }
 
-        private static void CacheReflectionFields()
-        {
+        private static void CacheReflectionFields() {
             Type tm = typeof(TeamManager);
             s_teamExperienceField = tm.GetField("teamExperience", BindingFlags.NonPublic | BindingFlags.Instance);
             s_teamLevelsField = tm.GetField("teamLevels", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -79,8 +70,7 @@ namespace LevelUpChoices.Hooks
             s_teamNextExpField = tm.GetField("teamNextLevelExperience", BindingFlags.NonPublic | BindingFlags.Instance);
         }
 
-        private void OnDestroy()
-        {
+        private void OnDestroy() {
             On.RoR2.TeamManager.FindLevelForExperience -= TeamManager_FindLevelForExperience;
             On.RoR2.TeamManager.GetExperienceForLevel -= TeamManager_GetExperienceForLevel;
             On.RoR2.TeamManager.GiveTeamExperience -= TeamManager_GiveTeamExperience;
@@ -99,15 +89,12 @@ namespace LevelUpChoices.Hooks
             Run.onRunDestroyGlobal -= OnRunDestroyGlobal;
         }
 
-        private void OnSettingsChanged(object sender, object args)
-        {
+        private void OnSettingsChanged(object sender, object args) {
             bool enableCustomLevelSystem = ModConfig.EnableCustomLevelSystemValue;
             bool enableMonsterLevelScaling = ModConfig.EnableMonsterLevelScalingValue;
 
-            if (enableCustomLevelSystem)
-            {
-                if (!_lastEnableCustomLevelSystem)
-                {
+            if (enableCustomLevelSystem) {
+                if (!_lastEnableCustomLevelSystem) {
                     On.RoR2.TeamManager.FindLevelForExperience += TeamManager_FindLevelForExperience;
                     On.RoR2.TeamManager.GetExperienceForLevel += TeamManager_GetExperienceForLevel;
                     On.RoR2.TeamManager.GiveTeamExperience += TeamManager_GiveTeamExperience;
@@ -118,31 +105,26 @@ namespace LevelUpChoices.Hooks
 
                 RebuildCustomTable();
 
-                if (enableMonsterLevelScaling && !_lastEnableMonsterLevelScaling)
-                {
+                if (enableMonsterLevelScaling && !_lastEnableMonsterLevelScaling) {
                     On.RoR2.CharacterBody.RecalculateStats += CharacterBody_RecalculateStats;
                     On.RoR2.UI.AmbientLevelDisplay.Update += AmbientLevelDisplay_Update;
                     Log.Info("Monster level scaling enabled.");
                 }
-                else if (!enableMonsterLevelScaling && _lastEnableMonsterLevelScaling)
-                {
+                else if (!enableMonsterLevelScaling && _lastEnableMonsterLevelScaling) {
                     On.RoR2.CharacterBody.RecalculateStats -= CharacterBody_RecalculateStats;
                     On.RoR2.UI.AmbientLevelDisplay.Update -= AmbientLevelDisplay_Update;
                     Log.Info("Monster level scaling disabled.");
                 }
             }
-            else
-            {
-                if (_lastEnableCustomLevelSystem)
-                {
+            else {
+                if (_lastEnableCustomLevelSystem) {
                     On.RoR2.TeamManager.FindLevelForExperience -= TeamManager_FindLevelForExperience;
                     On.RoR2.TeamManager.GetExperienceForLevel -= TeamManager_GetExperienceForLevel;
                     On.RoR2.TeamManager.GiveTeamExperience -= TeamManager_GiveTeamExperience;
                     On.RoR2.TeamManager.SetTeamExperience -= TeamManager_SetTeamExperience;
                     On.RoR2.TeamManager.SetTeamLevel -= TeamManager_SetTeamLevel;
 
-                    if (_lastEnableMonsterLevelScaling)
-                    {
+                    if (_lastEnableMonsterLevelScaling) {
                         On.RoR2.CharacterBody.RecalculateStats -= CharacterBody_RecalculateStats;
                         On.RoR2.UI.AmbientLevelDisplay.Update -= AmbientLevelDisplay_Update;
                     }
@@ -159,13 +141,11 @@ namespace LevelUpChoices.Hooks
             SyncConfigAsServer();
         }
 
-        public static int GetCurrentMonsterLevel()
-        {
+        public static int GetCurrentMonsterLevel() {
             if (!Run.instance)
                 return 1;
 
-            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled)
-            {
+            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled) {
                 float scaleFactor = (float)ModConfig.MaxLevelValue / 94f; // Vanilla max level is 94
                 int ambientFloor = Run.instance.ambientLevelFloor;
                 int scaledAmbient = Mathf.FloorToInt(ambientFloor * scaleFactor);
@@ -174,8 +154,7 @@ namespace LevelUpChoices.Hooks
             return Run.instance.ambientLevelFloor;
         }
 
-        private void CharacterBody_RecalculateStats(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self)
-        {
+        private void CharacterBody_RecalculateStats(On.RoR2.CharacterBody.orig_RecalculateStats orig, CharacterBody self) {
             orig(self);
 
             if (!Run.instance || !ModConfig.EnableMonsterLevelScalingValue || !ModConfig.IsModEnabled)
@@ -195,18 +174,15 @@ namespace LevelUpChoices.Hooks
             self.level = Mathf.Max(self.level, GetCurrentMonsterLevel());
         }
 
-        private static void AmbientLevelDisplay_Update(On.RoR2.UI.AmbientLevelDisplay.orig_Update orig, RoR2.UI.AmbientLevelDisplay self)
-        {
+        private static void AmbientLevelDisplay_Update(On.RoR2.UI.AmbientLevelDisplay.orig_Update orig, RoR2.UI.AmbientLevelDisplay self) {
             orig(self);
-            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled && Run.instance)
-            {
+            if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled && Run.instance) {
                 int scaledLevel = GetCurrentMonsterLevel();
                 self.text.text = Language.GetStringFormatted("AMBIENT_LEVEL_DISPLAY_FORMAT", scaledLevel.ToString());
             }
         }
 
-        private static double CalculateOptimalMultiplier(uint maxLevel)
-        {
+        private static double CalculateOptimalMultiplier(uint maxLevel) {
             if (maxLevel < 2)
                 return 1.0;
 
@@ -215,8 +191,7 @@ namespace LevelUpChoices.Hooks
             double high = SEARCH_HIGH;
             double mid = 0;
 
-            for (int i = 0; i < 64; i++)
-            {
+            for (int i = 0; i < 64; i++) {
                 mid = (low + high) / 2.0;
                 double sum = XP_BASE * (Math.Pow(mid, maxLevel - 1) - 1.0) / (mid - 1.0);
                 if (sum < target)
@@ -228,12 +203,10 @@ namespace LevelUpChoices.Hooks
             return mid;
         }
 
-        private void RebuildCustomTable()
-        {
+        private void RebuildCustomTable() {
             int targetMaxLevel = MaxLevel;
 
-            if (targetMaxLevel < 2)
-            {
+            if (targetMaxLevel < 2) {
                 Log.Error("MaxLevel must be at least 2. Defaulting to 256.");
                 targetMaxLevel = 256;
             }
@@ -245,37 +218,30 @@ namespace LevelUpChoices.Hooks
             var list = new System.Collections.Generic.List<ulong> { 0uL, 0uL };
             bool maxed = false;
 
-            for (uint lvl = 2; lvl <= targetMaxLevel; lvl++)
-            {
+            for (uint lvl = 2; lvl <= targetMaxLevel; lvl++) {
                 ulong xp;
 
-                if (maxed)
-                {
+                if (maxed) {
                     xp = ulong.MaxValue;
                 }
-                else
-                {
+                else {
                     double step = XP_BASE * stepMultiplier;
                     stepMultiplier *= multiplier;
                     cumulative += step;
 
-                    if (cumulative >= (double)ulong.MaxValue)
-                    {
+                    if (cumulative >= (double)ulong.MaxValue) {
                         cumulative = (double)ulong.MaxValue;
                         xp = ulong.MaxValue;
                         maxed = true;
                     }
-                    else if (cumulative < 0.0)
-                    {
+                    else if (cumulative < 0.0) {
                         xp = 0;
                     }
-                    else
-                    {
+                    else {
                         xp = (ulong)cumulative;
                     }
 
-                    if (list.Count > 1 && xp <= list[^1] && xp != ulong.MaxValue)
-                    {
+                    if (list.Count > 1 && xp <= list[^1] && xp != ulong.MaxValue) {
                         xp = ulong.MaxValue;
                         maxed = true;
                     }
@@ -291,23 +257,20 @@ namespace LevelUpChoices.Hooks
             Log.Info($"XP table rebuilt. Max: {_customNaturalLevelCap}, Cap: {_customHardExpCap}, R: {multiplier:F4}");
         }
 
-        private uint TeamManager_FindLevelForExperience(On.RoR2.TeamManager.orig_FindLevelForExperience orig, ulong exp)
-        {
+        private uint TeamManager_FindLevelForExperience(On.RoR2.TeamManager.orig_FindLevelForExperience orig, ulong exp) {
             if (!ModConfig.IsModEnabled)
                 return orig(exp);
             if (_customExperienceTable == null || _customExperienceTable.Length == 0)
                 return orig(exp);
 
-            for (uint i = 1; i < _customExperienceTable.Length; i++)
-            {
+            for (uint i = 1; i < _customExperienceTable.Length; i++) {
                 if (_customExperienceTable[i] > exp)
                     return i - 1;
             }
             return _customNaturalLevelCap;
         }
 
-        private ulong TeamManager_GetExperienceForLevel(On.RoR2.TeamManager.orig_GetExperienceForLevel orig, uint level)
-        {
+        private ulong TeamManager_GetExperienceForLevel(On.RoR2.TeamManager.orig_GetExperienceForLevel orig, uint level) {
             if (!ModConfig.IsModEnabled)
                 return orig(level);
             if (_customExperienceTable == null || _customExperienceTable.Length == 0)
@@ -319,13 +282,11 @@ namespace LevelUpChoices.Hooks
             return _customExperienceTable[level];
         }
 
-        private void TeamManager_GiveTeamExperience(On.RoR2.TeamManager.orig_GiveTeamExperience orig, TeamManager self, TeamIndex teamIndex, ulong exp)
-        {
+        private void TeamManager_GiveTeamExperience(On.RoR2.TeamManager.orig_GiveTeamExperience orig, TeamManager self, TeamIndex teamIndex, ulong exp) {
             if (!NetworkServer.active)
                 return;
 
-            if (!ModConfig.IsModEnabled)
-            {
+            if (!ModConfig.IsModEnabled) {
                 orig(self, teamIndex, exp);
                 return;
             }
@@ -341,32 +302,26 @@ namespace LevelUpChoices.Hooks
                 return;
 
             ReadOnlyCollection<TeamComponent> members = TeamComponent.GetTeamMembers(teamIndex);
-            for (int i = 0; i < members.Count; i++)
-            {
+            for (int i = 0; i < members.Count; i++) {
                 CharacterBody body = members[i].GetComponent<CharacterBody>();
                 if (body?.master)
                     body.master.TrackBeadExperience(exp);
             }
         }
 
-        private void TeamManager_SetTeamLevel(On.RoR2.TeamManager.orig_SetTeamLevel orig, TeamManager self, TeamIndex teamIndex, uint newLevel)
-        {
-            if (!ModConfig.IsModEnabled)
-            {
+        private void TeamManager_SetTeamLevel(On.RoR2.TeamManager.orig_SetTeamLevel orig, TeamManager self, TeamIndex teamIndex, uint newLevel) {
+            if (!ModConfig.IsModEnabled) {
                 orig(self, teamIndex, newLevel);
                 return;
             }
 
-            if (teamIndex >= TeamIndex.Neutral && teamIndex < TeamIndex.Count && self.GetTeamLevel(teamIndex) != newLevel)
-            {
+            if (teamIndex >= TeamIndex.Neutral && teamIndex < TeamIndex.Count && self.GetTeamLevel(teamIndex) != newLevel) {
                 self.SetTeamExperience(teamIndex, TeamManager_GetExperienceForLevel(null, newLevel));
             }
         }
 
-        private void TeamManager_SetTeamExperience(On.RoR2.TeamManager.orig_SetTeamExperience orig, TeamManager self, TeamIndex teamIndex, ulong exp)
-        {
-            if (!ModConfig.IsModEnabled)
-            {
+        private void TeamManager_SetTeamExperience(On.RoR2.TeamManager.orig_SetTeamExperience orig, TeamManager self, TeamIndex teamIndex, ulong exp) {
+            if (!ModConfig.IsModEnabled) {
                 orig(self, teamIndex, exp);
                 return;
             }
@@ -380,11 +335,9 @@ namespace LevelUpChoices.Hooks
             uint oldLvl = self.GetTeamLevel(teamIndex);
             uint newLvl = TeamManager_FindLevelForExperience(null, exp);
 
-            if (oldLvl != newLvl)
-            {
+            if (oldLvl != newLvl) {
                 ReadOnlyCollection<TeamComponent> members = TeamComponent.GetTeamMembers(teamIndex);
-                for (int i = 0; i < members.Count; i++)
-                {
+                for (int i = 0; i < members.Count; i++) {
                     members[i].GetComponent<CharacterBody>()?.OnTeamLevelChanged();
                 }
 
@@ -397,22 +350,18 @@ namespace LevelUpChoices.Hooks
                 ulong[] nextExpArr = (ulong[])s_teamNextExpField?.GetValue(self);
                 nextExpArr?[(int)teamIndex] = TeamManager_GetExperienceForLevel(null, newLvl + 1);
 
-                if (oldLvl < newLvl)
-                {
+                if (oldLvl < newLvl) {
                     GlobalEventManager.OnTeamLevelUp(teamIndex);
 
-                    if (teamIndex == TeamIndex.Player)
-                    {
-                        for (uint l = oldLvl + 1; l <= newLvl; l++)
-                        {
+                    if (teamIndex == TeamIndex.Player) {
+                        for (uint l = oldLvl + 1; l <= newLvl; l++) {
                             OnLevelUp?.Invoke(l);
                         }
                     }
                 }
             }
 
-            if (NetworkServer.active)
-            {
+            if (NetworkServer.active) {
                 self.SetDirtyBit((uint)(1 << (int)teamIndex));
             }
         }
