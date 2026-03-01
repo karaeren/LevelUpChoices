@@ -35,6 +35,8 @@ namespace LevelUpChoices.Extensions
             }
         }
 
+        private static bool _hasLoggedError = false;
+
         internal static string GetItemDescription(
             ItemDef itemDef, int itemCount, CharacterMaster master,
             bool withOneMore, bool forceNew = false)
@@ -49,7 +51,11 @@ namespace LevelUpChoices.Extensions
             }
             catch (Exception e)
             {
-                Log.Error($"LookingGlass GetItemDescription reflection call failed: {e}");
+                if (!_hasLoggedError)
+                {
+                    Log.Error($"LookingGlass GetItemDescription reflection call failed: {e}\nSuppressing further errors from this method.");
+                    _hasLoggedError = true;
+                }
                 return null;
             }
         }

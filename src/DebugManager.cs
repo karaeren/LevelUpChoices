@@ -137,7 +137,11 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"pickupToken\": \"{Esc(def.pickupToken)}\",");
                     sb.AppendLine($"      \"pickupDescription\": \"{Esc(SafeGetString(def.pickupToken))}\",");
                     sb.AppendLine($"      \"descriptionToken\": \"{Esc(def.descriptionToken)}\",");
-                    sb.AppendLine($"      \"fullDescription\": \"{Esc(SafeGetString(Integrations.lookingGlassEnabled ? LookingGlassIntegration.GetItemDescription(def, 0, null, false) : def.descriptionToken))}\",");
+
+                    string lgDesc = Integrations.lookingGlassEnabled ? LookingGlassIntegration.GetItemDescription(def, 0, null, false) : null;
+                    string fullDesc = lgDesc ?? SafeGetString(def.descriptionToken);
+                    sb.AppendLine($"      \"fullDescription\": \"{Esc(fullDesc)}\",");
+
                     sb.AppendLine($"      \"loreToken\": \"{Esc(def.loreToken)}\",");
 
                     // --- Tier info ---

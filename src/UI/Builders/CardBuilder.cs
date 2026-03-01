@@ -131,9 +131,10 @@ namespace LevelUpChoices.UI.Builders
             // Description
             if (ModConfig.ShowItemDescriptions.Value && itemDef != null)
             {
-                string desc = "\n" + (Integrations.lookingGlassEnabled
+                string lgDesc = Integrations.lookingGlassEnabled
                     ? LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true)
-                    : Language.GetString(itemDef.pickupToken));
+                    : null;
+                string desc = "\n" + (lgDesc ?? Language.GetString(itemDef.pickupToken));
                 var descLabelGo = new GameObject("Description");
                 descLabelGo.transform.SetParent(card.transform, false);
                 var descTmp = descLabelGo.AddComponent<HGTextMeshProUGUI>();
