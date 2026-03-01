@@ -8,9 +8,9 @@ namespace LevelUpChoices.UI.Components
     {
         private readonly List<GameObject> _cards = [];
 
-        public void Initialize(UIElementBuilder elementBuilder)
+        public void Initialize()
         {
-            elementBuilder.AddHorizontalLayout(gameObject, new RectOffset(16, 16, 12, 16), 12, true, true, true, true);
+            UIElementBuilder.AddHorizontalLayout(gameObject, new RectOffset(16, 16, 12, 16), 12, true, true, true, true);
             gameObject.AddComponent<UnityEngine.UI.ContentSizeFitter>().verticalFit = UnityEngine.UI.ContentSizeFitter.FitMode.PreferredSize;
         }
 

@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using R2API;
 using RoR2;
 using RoR2.ContentManagement;
@@ -9,9 +8,9 @@ namespace LevelUpChoices.Artifacts
 {
     public class ChoiceArtifact : IContentPackProvider
     {
-        public static ArtifactDef ArtifactDef;
+        public static ArtifactDef ArtifactDef { get; private set; }
 
-        private static string _basePath;
+        private static string s_basePath;
 
         public ContentPack contentPack = new();
 
@@ -24,10 +23,10 @@ namespace LevelUpChoices.Artifacts
             ArtifactDef.nameToken = "ARTIFACT_CHOICE_NAME";
             ArtifactDef.descriptionToken = "ARTIFACT_CHOICE_DESC";
 
-            if (!string.IsNullOrEmpty(_basePath))
+            if (!string.IsNullOrEmpty(s_basePath))
             {
-                string onPath = System.IO.Path.Combine(_basePath, "Assets", "AoC_On.png");
-                string offPath = System.IO.Path.Combine(_basePath, "Assets", "AoC_Off.png");
+                string onPath = System.IO.Path.Combine(s_basePath, "Assets", "AoC_On.png");
+                string offPath = System.IO.Path.Combine(s_basePath, "Assets", "AoC_Off.png");
 
                 ArtifactDef.smallIconSelectedSprite = LoadSprite(onPath);
                 ArtifactDef.smallIconDeselectedSprite = LoadSprite(offPath);
@@ -67,7 +66,7 @@ namespace LevelUpChoices.Artifacts
 
         internal static void Init(BepInEx.PluginInfo pluginInfo)
         {
-            _basePath = System.IO.Path.GetDirectoryName(pluginInfo.Location);
+            s_basePath = System.IO.Path.GetDirectoryName(pluginInfo.Location);
 
             LanguageAPI.Add("ARTIFACT_CHOICE_NAME", "Artifact of Choice");
             LanguageAPI.Add("ARTIFACT_CHOICE_DESC", "Choose an item out of multiple options when you level up.");

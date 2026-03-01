@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using R2API.Networking.Interfaces;
 using RoR2;
 using UnityEngine;
@@ -12,17 +13,17 @@ namespace LevelUpChoices
     // unpauses when the last picker closes it. Uses the native PauseStopController when multiplayer pause is enabled.
     public static class GamePauseManager
     {
-        private static float savedTimeScale = 1f;
-        private static bool pausedByUs = false;
-        public static bool IsPausedByUs => pausedByUs;
+        private static float s_savedTimeScale = 1f;
 
-        private static readonly HashSet<NetworkInstanceId> activePickers = [];
+        public static bool IsPausedByUs { get; private set; } = false;
+
+        private static readonly HashSet<NetworkInstanceId> s_activePickers = [];
 
         public static void Pause()
         {
             if (!ModConfig.PauseOnItemSelect.Value)
                 return;
-            if (pausedByUs)
+            if (IsPausedByUs)
                 return;
 
             if (IsSinglePlayer())
@@ -32,19 +33,19 @@ namespace LevelUpChoices
             else
             {
                 // Tell the server we're picking — the server decides when to pause/unpause
-                var localUser = NetworkUser.readOnlyLocalPlayersList;
+                ReadOnlyCollection<NetworkUser> localUser = NetworkUser.readOnlyLocalPlayersList;
                 if (localUser.Count > 0)
                 {
                     new Networking.SendPickingState(localUser[0].netId, true)
                         .Send(R2API.Networking.NetworkDestination.Server);
                 }
-                pausedByUs = true;
+                IsPausedByUs = true;
             }
         }
 
         public static void Unpause()
         {
-            if (!pausedByUs)
+            if (!IsPausedByUs)
                 return;
 
             if (IsSinglePlayer())
@@ -54,7 +55,7 @@ namespace LevelUpChoices
             else
             {
                 // Tell the server we're done — server unpauses when all pickers are done
-                var localUser = NetworkUser.readOnlyLocalPlayersList;
+                ReadOnlyCollection<NetworkUser> localUser = NetworkUser.readOnlyLocalPlayersList;
                 if (localUser.Count > 0)
                 {
                     new Networking.SendPickingState(localUser[0].netId, false)
@@ -62,21 +63,21 @@ namespace LevelUpChoices
                 }
             }
 
-            pausedByUs = false;
+            IsPausedByUs = false;
         }
 
         // Force-unpause as a safety net (e.g. on run end or disconnect).
         public static void ForceReset()
         {
-            if (pausedByUs)
+            if (IsPausedByUs)
             {
                 if (Time.timeScale == 0f)
-                    Time.timeScale = savedTimeScale > 0f ? savedTimeScale : 1f;
+                    Time.timeScale = s_savedTimeScale > 0f ? s_savedTimeScale : 1f;
             }
 
-            pausedByUs = false;
-            savedTimeScale = 1f;
-            activePickers.Clear();
+            IsPausedByUs = false;
+            s_savedTimeScale = 1f;
+            s_activePickers.Clear();
         }
 
         // Server-only. Called when a client reports they started or stopped picking.
@@ -88,14 +89,14 @@ namespace LevelUpChoices
             if (!ModConfig.PauseOnItemSelect.Value)
                 return;
 
-            int previousCount = activePickers.Count;
+            int previousCount = s_activePickers.Count;
 
             if (isPicking)
-                activePickers.Add(netId);
+                s_activePickers.Add(netId);
             else
-                activePickers.Remove(netId);
+                s_activePickers.Remove(netId);
 
-            int currentCount = activePickers.Count;
+            int currentCount = s_activePickers.Count;
 
             // 0 → 1+ pickers → pause
             if (previousCount == 0 && currentCount > 0)
@@ -115,7 +116,7 @@ namespace LevelUpChoices
             if (!NetworkServer.active)
                 return;
 
-            if (activePickers.Remove(netId) && activePickers.Count == 0)
+            if (s_activePickers.Remove(netId) && s_activePickers.Count == 0)
             {
                 ServerUnpause();
             }
@@ -133,19 +134,19 @@ namespace LevelUpChoices
 
         private static void PauseSinglePlayer()
         {
-            savedTimeScale = Time.timeScale;
+            s_savedTimeScale = Time.timeScale;
             Time.timeScale = 0f;
-            pausedByUs = true;
+            IsPausedByUs = true;
         }
 
         private static void UnpauseSinglePlayer()
         {
-            Time.timeScale = savedTimeScale > 0f ? savedTimeScale : 1f;
+            Time.timeScale = s_savedTimeScale > 0f ? s_savedTimeScale : 1f;
         }
 
         private static void ServerPause()
         {
-            var controller = PauseStopController.instance;
+            PauseStopController controller = PauseStopController.instance;
             if (controller != null && controller.allowMultiplayerPause)
             {
                 controller.Pause(true);
@@ -154,7 +155,7 @@ namespace LevelUpChoices
 
         private static void ServerUnpause()
         {
-            var controller = PauseStopController.instance;
+            PauseStopController controller = PauseStopController.instance;
             controller?.Pause(false);
         }
     }

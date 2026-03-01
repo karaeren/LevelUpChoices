@@ -11,7 +11,7 @@ namespace LevelUpChoices
 {
     public class DebugManager : MonoBehaviour
     {
-        private bool CheckDebugEnabled()
+        private static bool CheckDebugEnabled()
         {
             if (ModConfig.DebugPassword == null)
                 return false;
@@ -22,7 +22,7 @@ namespace LevelUpChoices
             return true;
         }
 
-        private void Update()
+        private static void Update()
         {
             try
             {
@@ -71,18 +71,18 @@ namespace LevelUpChoices
                 // ========== ITEM TIER DEFS ==========
                 sb.AppendLine("  \"itemTierDefs\": [");
                 bool firstTier = true;
-                var allTiers = new[] {
+                ItemTier[] allTiers = [
                     ItemTier.Tier1, ItemTier.Tier2, ItemTier.Tier3,
                     ItemTier.Lunar, ItemTier.Boss, ItemTier.NoTier,
                     ItemTier.VoidTier1, ItemTier.VoidTier2, ItemTier.VoidTier3,
                     ItemTier.VoidBoss, ItemTier.AssignedAtRuntime
-                };
-                foreach (var tier in allTiers)
+                ];
+                foreach (ItemTier tier in allTiers)
                 {
                     if (!firstTier)
                         sb.AppendLine(",");
                     firstTier = false;
-                    var td = ItemTierCatalog.GetItemTierDef(tier);
+                    ItemTierDef td = ItemTierCatalog.GetItemTierDef(tier);
                     sb.AppendLine("    {");
                     sb.AppendLine($"      \"tier\": \"{tier}\",");
                     sb.AppendLine($"      \"tierDefExists\": {Bool(td != null)},");
@@ -110,13 +110,13 @@ namespace LevelUpChoices
                 // ========== ALL ITEMS ==========
                 sb.AppendLine("  \"items\": [");
                 bool firstItem = true;
-                foreach (var index in ItemCatalog.allItems)
+                foreach (ItemIndex index in ItemCatalog.allItems)
                 {
                     if (!firstItem)
                         sb.AppendLine(",");
                     firstItem = false;
 
-                    var def = ItemCatalog.GetItemDef(index);
+                    ItemDef def = ItemCatalog.GetItemDef(index);
                     bool isNull = def == null;
 
                     sb.AppendLine("    {");
@@ -138,7 +138,7 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"pickupDescription\": \"{Esc(SafeGetString(def.pickupToken))}\",");
                     sb.AppendLine($"      \"descriptionToken\": \"{Esc(def.descriptionToken)}\",");
 
-                    string lgDesc = Integrations.lookingGlassEnabled ? LookingGlassIntegration.GetItemDescription(def, 0, null, false) : null;
+                    string lgDesc = Integrations.LookingGlassEnabled ? LookingGlassIntegration.GetItemDescription(def, 0, null, false) : null;
                     string fullDesc = lgDesc ?? SafeGetString(def.descriptionToken);
                     sb.AppendLine($"      \"fullDescription\": \"{Esc(fullDesc)}\",");
 
@@ -146,7 +146,7 @@ namespace LevelUpChoices
 
                     // --- Tier info ---
                     sb.AppendLine($"      \"tier\": \"{def.tier}\",");
-                    var tierDef = ItemTierCatalog.GetItemTierDef(def.tier);
+                    ItemTierDef tierDef = ItemTierCatalog.GetItemTierDef(def.tier);
                     sb.AppendLine($"      \"tierDef\": {{");
                     if (tierDef != null)
                     {
@@ -180,14 +180,14 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"requiredExpansion\": \"{Esc(def.requiredExpansion != null ? def.requiredExpansion.name : "null")}\",");
 
                     // --- PickupCatalog info ---
-                    var pickupIdx = PickupCatalog.FindPickupIndex(index);
+                    PickupIndex pickupIdx = PickupCatalog.FindPickupIndex(index);
                     bool hasPickup = pickupIdx != PickupIndex.none;
                     sb.AppendLine($"      \"pickup\": {{");
                     sb.AppendLine($"        \"pickupIndex\": {pickupIdx.value},");
                     sb.AppendLine($"        \"hasPickup\": {Bool(hasPickup)},");
                     if (hasPickup)
                     {
-                        var pdef = PickupCatalog.GetPickupDef(pickupIdx);
+                        PickupDef pdef = PickupCatalog.GetPickupDef(pickupIdx);
                         if (pdef != null)
                         {
                             sb.AppendLine($"        \"internalName\": \"{Esc(pdef.internalName)}\",");
@@ -271,13 +271,13 @@ namespace LevelUpChoices
                 // ========== ALL EQUIPMENT ==========
                 sb.AppendLine("  \"equipment\": [");
                 bool firstEquip = true;
-                foreach (var eqIdx in EquipmentCatalog.allEquipment)
+                foreach (EquipmentIndex eqIdx in EquipmentCatalog.allEquipment)
                 {
                     if (!firstEquip)
                         sb.AppendLine(",");
                     firstEquip = false;
 
-                    var edef = EquipmentCatalog.GetEquipmentDef(eqIdx);
+                    EquipmentDef edef = EquipmentCatalog.GetEquipmentDef(eqIdx);
                     sb.AppendLine("    {");
                     sb.AppendLine($"      \"equipmentIndex\": {(int)eqIdx},");
                     sb.AppendLine($"      \"equipmentDefExists\": {Bool(edef != null)},");
@@ -312,7 +312,7 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"requiredExpansion\": \"{Esc(edef.requiredExpansion != null ? edef.requiredExpansion.name : "null")}\",");
 
                     // Equipment pickup info
-                    var ePickupIdx = PickupCatalog.FindPickupIndex(eqIdx);
+                    PickupIndex ePickupIdx = PickupCatalog.FindPickupIndex(eqIdx);
                     bool eHasPickup = ePickupIdx != PickupIndex.none;
                     sb.AppendLine($"      \"pickup\": {{");
                     sb.AppendLine($"        \"pickupIndex\": {ePickupIdx.value},");

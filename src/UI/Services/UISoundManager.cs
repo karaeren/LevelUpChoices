@@ -1,4 +1,3 @@
-using LevelUpChoices.UI.Constants;
 using RoR2;
 
 namespace LevelUpChoices.UI.Services

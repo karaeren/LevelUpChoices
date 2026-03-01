@@ -11,7 +11,7 @@ namespace LevelUpChoices.UI.Builders
     {
         private readonly UIAssetService _assetService = assetService;
 
-        public HGTextMeshProUGUI MakeLabel(
+        public static HGTextMeshProUGUI MakeLabel(
             Transform parent,
             string text,
             float fontSize,
@@ -22,7 +22,7 @@ namespace LevelUpChoices.UI.Builders
             var gameObject = new GameObject("Label", typeof(RectTransform));
             gameObject.transform.SetParent(parent, false);
 
-            var textComponent = gameObject.AddComponent<HGTextMeshProUGUI>();
+            HGTextMeshProUGUI textComponent = gameObject.AddComponent<HGTextMeshProUGUI>();
             textComponent.text = text;
             textComponent.fontSize = fontSize;
             textComponent.color = color;
@@ -36,9 +36,9 @@ namespace LevelUpChoices.UI.Builders
             return textComponent;
         }
 
-        public Image AddPanel(GameObject gameObject, Color color, bool sliced, Sprite sprite)
+        public static Image AddPanel(GameObject gameObject, Color color, bool sliced, Sprite sprite)
         {
-            var image = gameObject.AddComponent<Image>();
+            Image image = gameObject.AddComponent<Image>();
             image.color = color;
             image.type = (sliced && sprite != null) ? Image.Type.Sliced : Image.Type.Simple;
             if (sprite != null)
@@ -47,9 +47,9 @@ namespace LevelUpChoices.UI.Builders
             return image;
         }
 
-        public void AddButtonSound(Button btn)
+        public static void AddButtonSound(Button btn)
         {
-            var eventTrigger = btn.gameObject.AddComponent<EventTrigger>();
+            EventTrigger eventTrigger = btn.gameObject.AddComponent<EventTrigger>();
 
             var hoverEntry = new EventTrigger.Entry
             {
@@ -65,18 +65,18 @@ namespace LevelUpChoices.UI.Builders
 
         }
 
-        public LayoutElement MakeSpacer(Transform parent, string name, float minHeight, float preferredHeight, float flexibleHeight)
+        public static LayoutElement MakeSpacer(Transform parent, string name, float minHeight, float preferredHeight, float flexibleHeight)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
-            var le = go.AddComponent<LayoutElement>();
+            LayoutElement le = go.AddComponent<LayoutElement>();
             le.minHeight = minHeight;
             le.preferredHeight = preferredHeight;
             le.flexibleHeight = flexibleHeight;
             return le;
         }
 
-        public GameObject MakeUIObject(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
+        public static GameObject MakeUIObject(string name, Transform parent, Vector2 anchorMin, Vector2 anchorMax, Vector2 pivot, Vector2 sizeDelta, Vector2 anchoredPosition)
         {
             var go = new GameObject(name, typeof(RectTransform));
             go.transform.SetParent(parent, false);
@@ -89,11 +89,11 @@ namespace LevelUpChoices.UI.Builders
             return go;
         }
 
-        public VerticalLayoutGroup AddVerticalLayout(GameObject go, RectOffset padding, float spacing = 0f,
+        public static VerticalLayoutGroup AddVerticalLayout(GameObject go, RectOffset padding, float spacing = 0f,
             bool childControlHeight = false, bool childControlWidth = true,
             bool childForceExpandHeight = false, bool childForceExpandWidth = true)
         {
-            var layout = go.AddComponent<VerticalLayoutGroup>();
+            VerticalLayoutGroup layout = go.AddComponent<VerticalLayoutGroup>();
             layout.padding = padding;
             layout.spacing = spacing;
             layout.childControlHeight = childControlHeight;
@@ -103,11 +103,11 @@ namespace LevelUpChoices.UI.Builders
             return layout;
         }
 
-        public HorizontalLayoutGroup AddHorizontalLayout(GameObject go, RectOffset padding, float spacing = 0f,
+        public static HorizontalLayoutGroup AddHorizontalLayout(GameObject go, RectOffset padding, float spacing = 0f,
             bool childControlHeight = true, bool childControlWidth = true,
             bool childForceExpandHeight = true, bool childForceExpandWidth = true)
         {
-            var layout = go.AddComponent<HorizontalLayoutGroup>();
+            HorizontalLayoutGroup layout = go.AddComponent<HorizontalLayoutGroup>();
             layout.padding = padding;
             layout.spacing = spacing;
             layout.childControlHeight = childControlHeight;

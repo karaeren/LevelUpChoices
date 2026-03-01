@@ -33,10 +33,10 @@ namespace LevelUpChoices
             _tierCounts.Clear();
             _lastCalculatedTokens = -1;
 
-            foreach (var index in ItemCatalog.allItems)
+            foreach (ItemIndex index in ItemCatalog.allItems)
             {
                 string skipReason = null;
-                var def = ItemCatalog.GetItemDef(index);
+                ItemDef def = ItemCatalog.GetItemDef(index);
 
                 if (def == null)
                     skipReason = "DEF_NULL";
@@ -141,7 +141,7 @@ namespace LevelUpChoices
             float wBoss = Mathf.Lerp(earlyBoss, Mathf.Lerp(midBoss, lateBoss, t2to3), t1to2);
 
             // Use cached tiers — no GetItemDef calls, no list allocation
-            foreach (var kv in _tiers)
+            foreach (KeyValuePair<ItemIndex, ItemTier> kv in _tiers)
             {
                 float tierWeight = kv.Value switch
                 {
@@ -162,7 +162,7 @@ namespace LevelUpChoices
         // redistribute its tier's weight across remaining items.
         public void Remove(ItemIndex item)
         {
-            if (!_tiers.TryGetValue(item, out var tier))
+            if (!_tiers.TryGetValue(item, out ItemTier tier))
                 return;
 
             _tiers.Remove(item);
@@ -226,7 +226,7 @@ namespace LevelUpChoices
         {
             // Compute total weight of eligible items
             float total = 0f;
-            foreach (var kv in _weights)
+            foreach (KeyValuePair<ItemIndex, float> kv in _weights)
             {
                 if (exclude != null && exclude.Contains(kv.Key))
                     continue;
@@ -243,7 +243,7 @@ namespace LevelUpChoices
             float cumulative = 0f;
             ItemIndex last = ItemIndex.None;
 
-            foreach (var kv in _weights)
+            foreach (KeyValuePair<ItemIndex, float> kv in _weights)
             {
                 if (exclude != null && exclude.Contains(kv.Key))
                     continue;
@@ -257,7 +257,7 @@ namespace LevelUpChoices
             return last;
         }
 
-        private int GetTierValue(ItemTier tier)
+        private static int GetTierValue(ItemTier tier)
         {
             return tier switch
             {

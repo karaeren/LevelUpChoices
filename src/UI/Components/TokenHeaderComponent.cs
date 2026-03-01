@@ -1,7 +1,4 @@
-using LevelUpChoices.UI.Builders;
-using LevelUpChoices.UI.Constants;
 using RoR2.UI;
-using TMPro;
 using UnityEngine;
 
 namespace LevelUpChoices.UI.Components
@@ -25,7 +22,7 @@ namespace LevelUpChoices.UI.Components
             _banishLabel?.text = $"<style=cIsHealth>◆ BANISH</style>  {banishTokens}";
             _rerollLabel?.text = $"<style=cIsUtility>◆ REROLL</style>  {rerollTokens}";
 
-            var rect = GetComponent<RectTransform>();
+            RectTransform rect = GetComponent<RectTransform>();
             if (rect != null)
             {
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rect);

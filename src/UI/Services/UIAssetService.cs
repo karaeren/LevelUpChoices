@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace LevelUpChoices.UI.Services
 {
@@ -7,17 +8,16 @@ namespace LevelUpChoices.UI.Services
     {
         public const string PanelSpriteLocation = "RoR2/Base/UI/texUICleanButton.png";
 
-        private static UIAssetService _instance;
         public static UIAssetService Instance
         {
             get
             {
-                if (_instance == null)
+                if (field == null)
                 {
-                    _instance = new UIAssetService();
-                    _instance.LoadAssets();
+                    field = new UIAssetService();
+                    field.LoadAssets();
                 }
-                return _instance;
+                return field;
             }
         }
 
@@ -25,7 +25,7 @@ namespace LevelUpChoices.UI.Services
 
         private void LoadAssets()
         {
-            var panelTask = Addressables.LoadAssetAsync<Sprite>(PanelSpriteLocation);
+            AsyncOperationHandle<Sprite> panelTask = Addressables.LoadAssetAsync<Sprite>(PanelSpriteLocation);
             PanelSprite = panelTask.WaitForCompletion();
             if (PanelSprite == null)
             {

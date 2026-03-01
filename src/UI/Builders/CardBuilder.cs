@@ -1,7 +1,5 @@
 using System;
-using LevelUpChoices;
 using LevelUpChoices.Extensions;
-using LevelUpChoices.UI;
 using LevelUpChoices.UI.Constants;
 using LevelUpChoices.UI.Services;
 using RoR2;
@@ -28,14 +26,14 @@ namespace LevelUpChoices.UI.Builders
             Action<int> onBanishClicked,
             Action<int> onRerollClicked)
         {
-            var pickupDef = PickupCatalog.GetPickupDef(pickupIndex);
-            var itemDef = ItemCatalog.GetItemDef(pickupDef?.itemIndex ?? ItemIndex.None);
+            PickupDef pickupDef = PickupCatalog.GetPickupDef(pickupIndex);
+            ItemDef itemDef = ItemCatalog.GetItemDef(pickupDef?.itemIndex ?? ItemIndex.None);
 
             Color tierColor = Color.white;
 
             if (itemDef != null)
             {
-                var tierDef = ItemTierCatalog.GetItemTierDef(itemDef.tier);
+                ItemTierDef tierDef = ItemTierCatalog.GetItemTierDef(itemDef.tier);
                 if (tierDef != null)
                     tierColor = ColorCatalog.GetColor(tierDef.colorIndex);
             }
@@ -43,7 +41,7 @@ namespace LevelUpChoices.UI.Builders
             var card = new GameObject($"Card_{slotIndex}");
             card.transform.SetParent(parent, false);
 
-            var cardImg = card.AddComponent<Image>();
+            Image cardImg = card.AddComponent<Image>();
             if (_assetService.PanelSprite != null)
             {
                 cardImg.sprite = _assetService.PanelSprite;
@@ -51,9 +49,9 @@ namespace LevelUpChoices.UI.Builders
             }
             cardImg.color = UIColors.CardBg;
 
-            var cardBtn = card.AddComponent<Button>();
+            Button cardBtn = card.AddComponent<Button>();
             cardBtn.targetGraphic = cardImg;
-            var cardBtnColors = cardBtn.colors;
+            ColorBlock cardBtnColors = cardBtn.colors;
             cardBtnColors.normalColor = UIColors.CardButtonNormal;
             cardBtnColors.highlightedColor = UIColors.CardButtonHighlighted;
             cardBtnColors.pressedColor = UIColors.CardButtonPressed;
@@ -61,45 +59,45 @@ namespace LevelUpChoices.UI.Builders
             cardBtn.colors = cardBtnColors;
             cardBtn.onClick.AddListener(() => onItemClicked?.Invoke(pickupIndex));
 
-            var hoverTrigger = card.AddComponent<EventTrigger>();
+            EventTrigger hoverTrigger = card.AddComponent<EventTrigger>();
             var hoverEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
             hoverEntry.callback.AddListener(_ => UISoundManager.PlayHover());
             hoverTrigger.triggers.Add(hoverEntry);
 
-            var cardLe = card.AddComponent<LayoutElement>();
+            LayoutElement cardLe = card.AddComponent<LayoutElement>();
             cardLe.preferredWidth = 0;
             cardLe.flexibleWidth = 1;
 
-            _elementBuilder.AddVerticalLayout(card, new RectOffset(6, 6, 8, 52), 4, false, true, false, true);
+            UIElementBuilder.AddVerticalLayout(card, new RectOffset(6, 6, 8, 52), 4, false, true, false, true);
 
             // Icon background
             var iconGo = new GameObject("Icon");
             iconGo.transform.SetParent(card.transform, false);
-            var imgLe = iconGo.AddComponent<LayoutElement>();
+            LayoutElement imgLe = iconGo.AddComponent<LayoutElement>();
             imgLe.minHeight = 90;
             imgLe.preferredHeight = 90;
             imgLe.flexibleHeight = 0;
 
-            var iconBg = iconGo.AddComponent<Image>();
+            Image iconBg = iconGo.AddComponent<Image>();
             iconBg.color = UIColors.GetIconBackgroundColor(tierColor);
 
             // Icon sprite
-            var iconGo2 = _elementBuilder.MakeUIObject("IconSprite", iconGo.transform,
+            GameObject iconGo2 = UIElementBuilder.MakeUIObject("IconSprite", iconGo.transform,
                 new Vector2(0.15f, 0.15f), new Vector2(0.85f, 0.85f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            var iconRect = iconGo2.GetComponent<RectTransform>();
+            RectTransform iconRect = iconGo2.GetComponent<RectTransform>();
             iconRect.offsetMin = Vector2.zero;
             iconRect.offsetMax = Vector2.zero;
-            var iconImg = iconGo2.AddComponent<Image>();
+            Image iconImg = iconGo2.AddComponent<Image>();
             iconImg.color = Color.white;
             iconImg.preserveAspect = true;
             if (pickupDef?.iconSprite != null)
                 iconImg.sprite = pickupDef.iconSprite;
 
             // Name spacer
-            _elementBuilder.MakeSpacer(card.transform, "NameSpacer", 2f, 2f, 0f);
+            UIElementBuilder.MakeSpacer(card.transform, "NameSpacer", 2f, 2f, 0f);
 
             // Owned count lookup
-            var localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
+            CharacterMaster localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
             int ownedCount = localMaster?.inventory?.GetItemCountEffective(itemDef?.itemIndex ?? ItemIndex.None) ?? 0;
 
             // Name label
@@ -108,7 +106,7 @@ namespace LevelUpChoices.UI.Builders
 
             if (synergy != ItemIndex.None)
             {
-                var synergyDef = ItemCatalog.GetItemDef(synergy);
+                ItemDef synergyDef = ItemCatalog.GetItemDef(synergy);
                 if (synergyDef != null)
                 {
                     string synergyName = Language.GetString(synergyDef.nameToken);
@@ -119,7 +117,7 @@ namespace LevelUpChoices.UI.Builders
 
             var nameLabelGo = new GameObject("NameLabel");
             nameLabelGo.transform.SetParent(card.transform, false);
-            var nameTmp = nameLabelGo.AddComponent<HGTextMeshProUGUI>();
+            HGTextMeshProUGUI nameTmp = nameLabelGo.AddComponent<HGTextMeshProUGUI>();
             nameTmp.text = displayName;
             nameTmp.fontSize = 22f;
             nameTmp.color = tierColor;
@@ -131,13 +129,13 @@ namespace LevelUpChoices.UI.Builders
             // Description
             if (ModConfig.ShowItemDescriptions.Value && itemDef != null)
             {
-                string lgDesc = Integrations.lookingGlassEnabled
+                string lgDesc = Integrations.LookingGlassEnabled
                     ? LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true)
                     : null;
                 string desc = "\n" + (lgDesc ?? Language.GetString(itemDef.pickupToken));
                 var descLabelGo = new GameObject("Description");
                 descLabelGo.transform.SetParent(card.transform, false);
-                var descTmp = descLabelGo.AddComponent<HGTextMeshProUGUI>();
+                HGTextMeshProUGUI descTmp = descLabelGo.AddComponent<HGTextMeshProUGUI>();
                 descTmp.text = desc;
                 descTmp.fontSize = 16f;
                 descTmp.color = UIColors.DescriptionText;
@@ -147,10 +145,10 @@ namespace LevelUpChoices.UI.Builders
             }
 
             // Flex spacer
-            _elementBuilder.MakeSpacer(card.transform, "FlexSpacer", 1f, 1f, 1f);
+            UIElementBuilder.MakeSpacer(card.transform, "FlexSpacer", 1f, 1f, 1f);
 
             // BANISH button
-            _buttonBuilder.CreateAbsoluteButton(
+            ButtonBuilder.CreateAbsoluteButton(
                 card.transform,
                 "BANISH",
                 new Vector2(0f, 0f),
@@ -162,7 +160,7 @@ namespace LevelUpChoices.UI.Builders
                 () => onBanishClicked?.Invoke(slotIndex));
 
             // REROLL button
-            _buttonBuilder.CreateAbsoluteButton(
+            ButtonBuilder.CreateAbsoluteButton(
                 card.transform,
                 "REROLL",
                 new Vector2(0.5f, 0f),

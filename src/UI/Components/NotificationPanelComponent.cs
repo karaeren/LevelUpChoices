@@ -1,6 +1,4 @@
-using LevelUpChoices.UI.Constants;
 using RoR2.UI;
-using TMPro;
 using UnityEngine;
 
 namespace LevelUpChoices.UI.Components

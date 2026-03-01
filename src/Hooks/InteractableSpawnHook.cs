@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using RoR2;
 using UnityEngine;
 
-namespace LevelUpChoices
+namespace LevelUpChoices.Hooks
 {
     public class InteractableSpawnHook : MonoBehaviour
     {
@@ -12,7 +12,7 @@ namespace LevelUpChoices
             SceneDirector.onPrePopulateSceneServer += OnPrePopulateSceneServer;
         }
 
-        private static readonly HashSet<string> BlacklistedSpawns = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> s_blacklistedSpawns = new(StringComparer.OrdinalIgnoreCase)
         {
             // https://github.com/risk-of-thunder/R2API/blob/master/R2API.Director/DirectorAPIhelpers.cs
 
@@ -67,7 +67,7 @@ namespace LevelUpChoices
             if (!ClassicStageInfo.instance || !ClassicStageInfo.instance.interactableCategories)
                 return;
 
-            var selection = ClassicStageInfo.instance.interactableCategories;
+            DirectorCardCategorySelection selection = ClassicStageInfo.instance.interactableCategories;
             if (!selection)
             {
                 Log.Error("No interactable categories found on ClassicStageInfo!");
@@ -78,14 +78,14 @@ namespace LevelUpChoices
 
             for (int i = 0; i < selection.categories.Length; i++)
             {
-                var category = selection.categories[i];
-                var originalCards = category.cards;
+                DirectorCardCategorySelection.Category category = selection.categories[i];
+                DirectorCard[] originalCards = category.cards;
                 var filteredCards = new DirectorCard[originalCards.Length];
                 int filteredCount = 0;
 
                 for (int j = 0; j < originalCards.Length; j++)
                 {
-                    if (!BlacklistedSpawns.Contains(originalCards[j].spawnCard.name))
+                    if (!s_blacklistedSpawns.Contains(originalCards[j].spawnCard.name))
                     {
                         filteredCards[filteredCount++] = originalCards[j];
                     }

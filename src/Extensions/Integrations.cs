@@ -4,7 +4,7 @@ namespace LevelUpChoices.Extensions
 {
     public static class Integrations
     {
-        public static bool lookingGlassEnabled = false;
+        public static bool LookingGlassEnabled { get; private set; } = false;
 
         public static void Init()
         {
@@ -16,7 +16,7 @@ namespace LevelUpChoices.Extensions
                 {
                     Log.Info("Running code injection for LookingGlass.");
                     LookingGlassIntegration.Init();
-                    lookingGlassEnabled = true;
+                    LookingGlassEnabled = true;
                 }
                 catch (Exception e)
                 {

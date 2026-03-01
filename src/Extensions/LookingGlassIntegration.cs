@@ -8,16 +8,16 @@ namespace LevelUpChoices.Extensions
     internal class LookingGlassIntegration
     {
         // Cached reflection handle for ItemStats.GetItemDescription(ItemDef, int, CharacterMaster, bool, bool)
-        private static MethodInfo _getItemDescriptionMethod;
+        private static MethodInfo s_getItemDescriptionMethod;
 
         internal static void Init()
         {
             var assembly = Assembly.GetAssembly(typeof(ItemDefinitions));
-            var itemStatsType = assembly?.GetType("LookingGlass.ItemStatsNameSpace.ItemStats");
+            Type itemStatsType = assembly?.GetType("LookingGlass.ItemStatsNameSpace.ItemStats");
 
             if (itemStatsType != null)
             {
-                _getItemDescriptionMethod = itemStatsType.GetMethod(
+                s_getItemDescriptionMethod = itemStatsType.GetMethod(
                     "GetItemDescription",
                     BindingFlags.Public | BindingFlags.Static,
                     null,
@@ -25,7 +25,7 @@ namespace LevelUpChoices.Extensions
                     null);
             }
 
-            if (_getItemDescriptionMethod != null)
+            if (s_getItemDescriptionMethod != null)
             {
                 Log.Info("LookingGlass integration initialized successfully.");
             }
@@ -35,26 +35,26 @@ namespace LevelUpChoices.Extensions
             }
         }
 
-        private static bool _hasLoggedError = false;
+        private static bool s_hasLoggedError = false;
 
         internal static string GetItemDescription(
             ItemDef itemDef, int itemCount, CharacterMaster master,
             bool withOneMore, bool forceNew = false)
         {
-            if (_getItemDescriptionMethod == null)
+            if (s_getItemDescriptionMethod == null)
                 return null;
 
             try
             {
-                return (string)_getItemDescriptionMethod.Invoke(
+                return (string)s_getItemDescriptionMethod.Invoke(
                     null, [itemDef, itemCount, master, withOneMore, forceNew]);
             }
             catch (Exception e)
             {
-                if (!_hasLoggedError)
+                if (!s_hasLoggedError)
                 {
                     Log.Error($"LookingGlass GetItemDescription reflection call failed: {e}\nSuppressing further errors from this method.");
-                    _hasLoggedError = true;
+                    s_hasLoggedError = true;
                 }
                 return null;
             }

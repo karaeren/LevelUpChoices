@@ -9,257 +9,257 @@ namespace LevelUpChoices
     {
         public class SyncPlayerState : INetMessage
         {
-            NetworkInstanceId targetNetId;
-            int selectionTokens;
-            int banishTokens;
-            int rerollTokens;
+            private NetworkInstanceId _targetNetId;
+            private int _selectionTokens;
+            private int _banishTokens;
+            private int _rerollTokens;
 
             public SyncPlayerState() { }
             public SyncPlayerState(NetworkInstanceId targetNetId, int selectionTokens, int banishTokens, int rerollTokens)
             {
-                this.targetNetId = targetNetId;
-                this.selectionTokens = selectionTokens;
-                this.banishTokens = banishTokens;
-                this.rerollTokens = rerollTokens;
+                _targetNetId = targetNetId;
+                _selectionTokens = selectionTokens;
+                _banishTokens = banishTokens;
+                _rerollTokens = rerollTokens;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(targetNetId);
-                writer.Write(selectionTokens);
-                writer.Write(banishTokens);
-                writer.Write(rerollTokens);
+                writer.Write(_targetNetId);
+                writer.Write(_selectionTokens);
+                writer.Write(_banishTokens);
+                writer.Write(_rerollTokens);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                targetNetId = reader.ReadNetworkId();
-                selectionTokens = reader.ReadInt32();
-                banishTokens = reader.ReadInt32();
-                rerollTokens = reader.ReadInt32();
+                _targetNetId = reader.ReadNetworkId();
+                _selectionTokens = reader.ReadInt32();
+                _banishTokens = reader.ReadInt32();
+                _rerollTokens = reader.ReadInt32();
             }
 
             public void OnReceived()
             {
-                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == targetNetId)
+                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == _targetNetId)
                 {
-                    LevelUpManager.Instance.UpdatePlayerState(selectionTokens, banishTokens, rerollTokens);
+                    LevelUpManager.Instance.UpdatePlayerState(_selectionTokens, _banishTokens, _rerollTokens);
                 }
             }
         }
 
         public class SyncItems : INetMessage
         {
-            List<PickupIndex> pickupIndices;
-            List<ItemIndex> synergizedItems;
-            NetworkInstanceId targetNetId;
+            private List<PickupIndex> _pickupIndices;
+            private List<ItemIndex> _synergizedItems;
+            private NetworkInstanceId _targetNetId;
 
             public SyncItems() { }
             public SyncItems(NetworkInstanceId targetNetId, List<PickupIndex> pickupIndices, List<ItemIndex> synergizedItems)
             {
-                this.targetNetId = targetNetId;
-                this.pickupIndices = pickupIndices;
-                this.synergizedItems = synergizedItems ?? new List<ItemIndex>(new ItemIndex[pickupIndices.Count]);
+                _targetNetId = targetNetId;
+                _pickupIndices = pickupIndices;
+                _synergizedItems = synergizedItems ?? [.. new ItemIndex[pickupIndices.Count]];
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(targetNetId);
-                writer.Write(pickupIndices.Count);
-                for (int i = 0; i < pickupIndices.Count; i++)
+                writer.Write(_targetNetId);
+                writer.Write(_pickupIndices.Count);
+                for (int i = 0; i < _pickupIndices.Count; i++)
                 {
-                    writer.Write(pickupIndices[i]);
-                    writer.Write(synergizedItems != null && i < synergizedItems.Count ? (int)synergizedItems[i] : (int)ItemIndex.None);
+                    writer.Write(_pickupIndices[i]);
+                    writer.Write(_synergizedItems != null && i < _synergizedItems.Count ? (int)_synergizedItems[i] : (int)ItemIndex.None);
                 }
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                targetNetId = reader.ReadNetworkId();
-                pickupIndices = [];
-                synergizedItems = [];
+                _targetNetId = reader.ReadNetworkId();
+                _pickupIndices = [];
+                _synergizedItems = [];
                 int count = reader.ReadInt32();
                 for (int i = 0; i < count; i++)
                 {
-                    pickupIndices.Add(reader.ReadPickupIndex());
-                    synergizedItems.Add((ItemIndex)reader.ReadInt32());
+                    _pickupIndices.Add(reader.ReadPickupIndex());
+                    _synergizedItems.Add((ItemIndex)reader.ReadInt32());
                 }
             }
 
             public void OnReceived()
             {
-                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == targetNetId)
+                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == _targetNetId)
                 {
-                    LevelUpManager.Instance.UpdateAvailableItems(pickupIndices, synergizedItems);
+                    LevelUpManager.Instance.UpdateAvailableItems(_pickupIndices, _synergizedItems);
                 }
             }
         }
 
         public class SendItemSelection : INetMessage
         {
-            PickupIndex pickupIndex;
-            NetworkInstanceId netId;
+            private PickupIndex _pickupIndex;
+            private NetworkInstanceId _netId;
 
             public SendItemSelection() { }
             public SendItemSelection(PickupIndex pickupIndex, NetworkInstanceId netId)
             {
-                this.pickupIndex = pickupIndex;
-                this.netId = netId;
+                _pickupIndex = pickupIndex;
+                _netId = netId;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(pickupIndex);
-                writer.Write(netId);
+                writer.Write(_pickupIndex);
+                writer.Write(_netId);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                pickupIndex = reader.ReadPickupIndex();
-                netId = reader.ReadNetworkId();
+                _pickupIndex = reader.ReadPickupIndex();
+                _netId = reader.ReadNetworkId();
             }
 
             public void OnReceived()
             {
                 if (NetworkServer.active)
                 {
-                    LevelUpManager.Instance.HandlePlayerSelection(netId, pickupIndex);
+                    LevelUpManager.Instance.HandlePlayerSelection(_netId, _pickupIndex);
                 }
             }
         }
 
         public class SendBanish : INetMessage
         {
-            int slotIndex;
-            NetworkInstanceId netId;
+            private int _slotIndex;
+            private NetworkInstanceId _netId;
 
             public SendBanish() { }
             public SendBanish(int slotIndex, NetworkInstanceId netId)
             {
-                this.slotIndex = slotIndex;
-                this.netId = netId;
+                _slotIndex = slotIndex;
+                _netId = netId;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(slotIndex);
-                writer.Write(netId);
+                writer.Write(_slotIndex);
+                writer.Write(_netId);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                slotIndex = reader.ReadInt32();
-                netId = reader.ReadNetworkId();
+                _slotIndex = reader.ReadInt32();
+                _netId = reader.ReadNetworkId();
             }
 
             public void OnReceived()
             {
                 if (NetworkServer.active)
                 {
-                    LevelUpManager.Instance.HandlePlayerBanish(netId, slotIndex);
+                    LevelUpManager.Instance.HandlePlayerBanish(_netId, _slotIndex);
                 }
             }
         }
 
         public class SendReroll : INetMessage
         {
-            int slotIndex;
-            NetworkInstanceId netId;
+            private int _slotIndex;
+            private NetworkInstanceId _netId;
 
             public SendReroll() { }
             public SendReroll(int slotIndex, NetworkInstanceId netId)
             {
-                this.slotIndex = slotIndex;
-                this.netId = netId;
+                _slotIndex = slotIndex;
+                _netId = netId;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(slotIndex);
-                writer.Write(netId);
+                writer.Write(_slotIndex);
+                writer.Write(_netId);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                slotIndex = reader.ReadInt32();
-                netId = reader.ReadNetworkId();
+                _slotIndex = reader.ReadInt32();
+                _netId = reader.ReadNetworkId();
             }
 
             public void OnReceived()
             {
                 if (NetworkServer.active)
                 {
-                    LevelUpManager.Instance.HandlePlayerReroll(netId, slotIndex);
+                    LevelUpManager.Instance.HandlePlayerReroll(_netId, _slotIndex);
                 }
             }
         }
 
         public class SendPickingState : INetMessage
         {
-            NetworkInstanceId netId;
-            bool isPicking;
+            private NetworkInstanceId _netId;
+            private bool _isPicking;
 
             public SendPickingState() { }
             public SendPickingState(NetworkInstanceId netId, bool isPicking)
             {
-                this.netId = netId;
-                this.isPicking = isPicking;
+                _netId = netId;
+                _isPicking = isPicking;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(netId);
-                writer.Write(isPicking);
+                writer.Write(_netId);
+                writer.Write(_isPicking);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                netId = reader.ReadNetworkId();
-                isPicking = reader.ReadBoolean();
+                _netId = reader.ReadNetworkId();
+                _isPicking = reader.ReadBoolean();
             }
 
             public void OnReceived()
             {
                 if (NetworkServer.active)
                 {
-                    GamePauseManager.HandlePickingState(netId, isPicking);
+                    GamePauseManager.HandlePickingState(_netId, _isPicking);
                 }
             }
         }
 
         public class SyncConfig : INetMessage
         {
-            int maxLevel;
-            bool enableMonsterLevelScaling;
-            bool enableCustomLevelSystem;
+            private int _maxLevel;
+            private bool _enableMonsterLevelScaling;
+            private bool _enableCustomLevelSystem;
 
             public SyncConfig() { }
             public SyncConfig(int maxLevel, bool enableMonsterLevelScaling, bool enableCustomLevelSystem)
             {
-                this.maxLevel = maxLevel;
-                this.enableMonsterLevelScaling = enableMonsterLevelScaling;
-                this.enableCustomLevelSystem = enableCustomLevelSystem;
+                _maxLevel = maxLevel;
+                _enableMonsterLevelScaling = enableMonsterLevelScaling;
+                _enableCustomLevelSystem = enableCustomLevelSystem;
             }
 
             public void Serialize(NetworkWriter writer)
             {
-                writer.Write(maxLevel);
-                writer.Write(enableMonsterLevelScaling);
-                writer.Write(enableCustomLevelSystem);
+                writer.Write(_maxLevel);
+                writer.Write(_enableMonsterLevelScaling);
+                writer.Write(_enableCustomLevelSystem);
             }
 
             public void Deserialize(NetworkReader reader)
             {
-                maxLevel = reader.ReadInt32();
-                enableMonsterLevelScaling = reader.ReadBoolean();
-                enableCustomLevelSystem = reader.ReadBoolean();
+                _maxLevel = reader.ReadInt32();
+                _enableMonsterLevelScaling = reader.ReadBoolean();
+                _enableCustomLevelSystem = reader.ReadBoolean();
             }
 
             public void OnReceived()
             {
                 if (NetworkServer.active)
                     return;
-                ModConfig.UpdateServerConfig(maxLevel, enableMonsterLevelScaling, enableCustomLevelSystem);
+                ModConfig.UpdateServerConfig(_maxLevel, _enableMonsterLevelScaling, _enableCustomLevelSystem);
             }
         }
     }

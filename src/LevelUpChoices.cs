@@ -54,8 +54,8 @@ namespace LevelUpChoices
             logicObject.AddComponent<LevelUpManager>();
             logicObject.AddComponent<UI.Integration.UIPauseIntegration>();
             logicObject.AddComponent<UI.ItemSelectUI>();
-            logicObject.AddComponent<ExperienceHook>();
-            logicObject.AddComponent<InteractableSpawnHook>();
+            logicObject.AddComponent<Hooks.ExperienceHook>();
+            logicObject.AddComponent<Hooks.InteractableSpawnHook>();
             logicObject.AddComponent<DebugManager>();
 
             Log.Info("LevelUpChoices initialized.");

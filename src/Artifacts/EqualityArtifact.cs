@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using R2API;
 using RoR2;
 using RoR2.ContentManagement;
@@ -11,21 +10,21 @@ namespace LevelUpChoices.Artifacts
 {
     public class EqualityArtifact : IContentPackProvider
     {
-        public static ArtifactDef ArtifactDef;
+        public static ArtifactDef ArtifactDef { get; private set; }
 
-        private static string _basePath;
+        private static string s_basePath;
 
         public ContentPack contentPack = new();
 
         public string identifier => "LevelUpChoices.EqualityArtifact";
 
-        private static int _lastMonsterLevel = 1;
-        private static int _itemGrantsCount = 0;
-        private static Inventory _monsterTeamInventory;
+        private static int s_lastMonsterLevel = 1;
+        private static int s_itemGrantsCount = 0;
+        private static Inventory s_monsterTeamInventory;
 
-        private static List<ItemIndex> _tier1Items = new();
-        private static List<ItemIndex> _tier2Items = new();
-        private static List<ItemIndex> _tier3Items = new();
+        private static readonly List<ItemIndex> s_tier1Items = [];
+        private static readonly List<ItemIndex> s_tier2Items = [];
+        private static readonly List<ItemIndex> s_tier3Items = [];
 
         public IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
@@ -34,10 +33,10 @@ namespace LevelUpChoices.Artifacts
             ArtifactDef.nameToken = "ARTIFACT_EQUALITY_NAME";
             ArtifactDef.descriptionToken = "ARTIFACT_EQUALITY_DESC";
 
-            if (!string.IsNullOrEmpty(_basePath))
+            if (!string.IsNullOrEmpty(s_basePath))
             {
-                string onPath = System.IO.Path.Combine(_basePath, "Assets", "AoE_On.png");
-                string offPath = System.IO.Path.Combine(_basePath, "Assets", "AoE_Off.png");
+                string onPath = System.IO.Path.Combine(s_basePath, "Assets", "AoE_On.png");
+                string offPath = System.IO.Path.Combine(s_basePath, "Assets", "AoE_Off.png");
 
                 ArtifactDef.smallIconSelectedSprite = LoadSprite(onPath);
                 ArtifactDef.smallIconDeselectedSprite = LoadSprite(offPath);
@@ -77,9 +76,9 @@ namespace LevelUpChoices.Artifacts
 
         internal static void Init(BepInEx.PluginInfo pluginInfo)
         {
-            _basePath = System.IO.Path.GetDirectoryName(pluginInfo.Location);
-            _lastMonsterLevel = 1;
-            _itemGrantsCount = 0;
+            s_basePath = System.IO.Path.GetDirectoryName(pluginInfo.Location);
+            s_lastMonsterLevel = 1;
+            s_itemGrantsCount = 0;
 
             LanguageAPI.Add("ARTIFACT_EQUALITY_NAME", "Artifact of Equality");
             LanguageAPI.Add("ARTIFACT_EQUALITY_DESC", "Enemies receive a random item when they level up. After all, we're all equal in death.");
@@ -101,18 +100,18 @@ namespace LevelUpChoices.Artifacts
             if (NetworkServer.active && IsEnabled())
             {
                 // Safety: if _lastMonsterLevel is 0 (uninitialized static), treat it as level 1
-                if (_lastMonsterLevel <= 0)
-                    _lastMonsterLevel = 1;
+                if (s_lastMonsterLevel <= 0)
+                    s_lastMonsterLevel = 1;
 
-                int newLevel = ExperienceHook.GetCurrentMonsterLevel();
-                if (newLevel > _lastMonsterLevel)
+                int newLevel = Hooks.ExperienceHook.GetCurrentMonsterLevel();
+                if (newLevel > s_lastMonsterLevel)
                 {
-                    int levelsGained = newLevel - _lastMonsterLevel;
+                    int levelsGained = newLevel - s_lastMonsterLevel;
                     for (int i = 0; i < levelsGained; i++)
                     {
                         GrantItemToMonsters();
                     }
-                    _lastMonsterLevel = newLevel;
+                    s_lastMonsterLevel = newLevel;
                 }
             }
         }
@@ -120,15 +119,15 @@ namespace LevelUpChoices.Artifacts
         [SystemInitializer(typeof(ItemCatalog))]
         public static void InitItems()
         {
-            if (_tier1Items.Count > 0)
+            if (s_tier1Items.Count > 0)
                 return; // Already initialized
 
-            _tier1Items.Clear();
-            _tier2Items.Clear();
-            _tier3Items.Clear();
+            s_tier1Items.Clear();
+            s_tier2Items.Clear();
+            s_tier3Items.Clear();
 
             // Build item lists when catalog is ready
-            foreach (var itemDef in ItemCatalog.allItemDefs)
+            foreach (ItemDef itemDef in ItemCatalog.allItemDefs)
             {
                 if (
                     itemDef.ContainsTag(ItemTag.AIBlacklist) ||
@@ -142,13 +141,13 @@ namespace LevelUpChoices.Artifacts
                     continue;
 
                 if (itemDef.tier == ItemTier.Tier1)
-                    _tier1Items.Add(itemDef.itemIndex);
+                    s_tier1Items.Add(itemDef.itemIndex);
                 else if (itemDef.tier == ItemTier.Tier2)
-                    _tier2Items.Add(itemDef.itemIndex);
+                    s_tier2Items.Add(itemDef.itemIndex);
                 else if (itemDef.tier == ItemTier.Tier3)
-                    _tier3Items.Add(itemDef.itemIndex);
+                    s_tier3Items.Add(itemDef.itemIndex);
             }
-            Log.Info($"Initialized monster item pools. T1: {_tier1Items.Count}, T2: {_tier2Items.Count}, T3: {_tier3Items.Count}");
+            Log.Info($"Initialized monster item pools. T1: {s_tier1Items.Count}, T2: {s_tier2Items.Count}, T3: {s_tier3Items.Count}");
         }
 
         private static void ContentManager_collectContentPackProviders(ContentManager.AddContentPackProviderDelegate addContentPackProvider)
@@ -173,12 +172,12 @@ namespace LevelUpChoices.Artifacts
                 // In case it's enabled mid-run (e.g. commands), we can initialize
                 if (Run.instance)
                 {
-                    if (_monsterTeamInventory == null)
+                    if (s_monsterTeamInventory == null)
                     {
                         CreateMonsterInventory();
                     }
                     // Sync level so we don't grant items for levels already reached
-                    _lastMonsterLevel = ExperienceHook.GetCurrentMonsterLevel();
+                    s_lastMonsterLevel = Hooks.ExperienceHook.GetCurrentMonsterLevel();
                 }
             }
         }
@@ -188,25 +187,25 @@ namespace LevelUpChoices.Artifacts
             if (artifactDef == ArtifactDef && NetworkServer.active)
             {
                 Log.Info("EqualityArtifact disabled.");
-                if (_monsterTeamInventory)
+                if (s_monsterTeamInventory)
                 {
-                    NetworkServer.Destroy(_monsterTeamInventory.gameObject);
-                    _monsterTeamInventory = null;
+                    NetworkServer.Destroy(s_monsterTeamInventory.gameObject);
+                    s_monsterTeamInventory = null;
                 }
             }
         }
 
         private static void CreateMonsterInventory()
         {
-            if (_monsterTeamInventory)
+            if (s_monsterTeamInventory)
                 return;
 
             GameObject inventoryPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/MonsterTeamGainsItemsArtifactInventory");
             if (inventoryPrefab)
             {
-                _monsterTeamInventory = UnityEngine.Object.Instantiate(inventoryPrefab).GetComponent<Inventory>();
-                _monsterTeamInventory.GetComponent<TeamFilter>().teamIndex = TeamIndex.Monster;
-                NetworkServer.Spawn(_monsterTeamInventory.gameObject);
+                s_monsterTeamInventory = UnityEngine.Object.Instantiate(inventoryPrefab).GetComponent<Inventory>();
+                s_monsterTeamInventory.GetComponent<TeamFilter>().teamIndex = TeamIndex.Monster;
+                NetworkServer.Spawn(s_monsterTeamInventory.gameObject);
             }
             else
             {
@@ -218,8 +217,8 @@ namespace LevelUpChoices.Artifacts
         {
             if (NetworkServer.active)
             {
-                _itemGrantsCount = 0;
-                _lastMonsterLevel = 1; // Reset to 1 for the new run
+                s_itemGrantsCount = 0;
+                s_lastMonsterLevel = 1; // Reset to 1 for the new run
 
                 if (IsEnabled())
                 {
@@ -231,37 +230,37 @@ namespace LevelUpChoices.Artifacts
 
         private static void OnRunDestroyGlobal(Run run)
         {
-            if (_monsterTeamInventory)
+            if (s_monsterTeamInventory)
             {
-                NetworkServer.Destroy(_monsterTeamInventory.gameObject);
-                _monsterTeamInventory = null;
+                NetworkServer.Destroy(s_monsterTeamInventory.gameObject);
+                s_monsterTeamInventory = null;
             }
-            _lastMonsterLevel = 1;
-            _itemGrantsCount = 0;
+            s_lastMonsterLevel = 1;
+            s_itemGrantsCount = 0;
         }
 
         private static void OnServerCardSpawnedGlobal(SpawnCard.SpawnResult spawnResult)
         {
-            if (!NetworkServer.active || !IsEnabled() || !_monsterTeamInventory)
+            if (!NetworkServer.active || !IsEnabled() || !s_monsterTeamInventory)
                 return;
 
             CharacterMaster characterMaster = spawnResult.spawnedInstance ? spawnResult.spawnedInstance.GetComponent<CharacterMaster>() : null;
             if (characterMaster && characterMaster.teamIndex == TeamIndex.Monster)
             {
-                characterMaster.inventory.AddItemsFrom(_monsterTeamInventory);
+                characterMaster.inventory.AddItemsFrom(s_monsterTeamInventory);
             }
         }
 
         private static void GrantItemToMonsters()
         {
-            if (!_monsterTeamInventory)
+            if (!s_monsterTeamInventory)
             {
                 Log.Warning("Attempted to grant item but monster inventory is null!");
                 return;
             }
 
-            int sequenceIndex = _itemGrantsCount % 5;
-            _itemGrantsCount++;
+            int sequenceIndex = s_itemGrantsCount % 5;
+            s_itemGrantsCount++;
 
             List<ItemIndex> pool = null;
 
@@ -269,14 +268,14 @@ namespace LevelUpChoices.Artifacts
             {
                 case 0: // White
                 case 1: // White
-                    pool = _tier1Items;
+                    pool = s_tier1Items;
                     break;
                 case 2: // Green
                 case 3: // Green
-                    pool = _tier2Items;
+                    pool = s_tier2Items;
                     break;
                 case 4: // Red
-                    pool = _tier3Items;
+                    pool = s_tier3Items;
                     break;
             }
 
@@ -285,10 +284,10 @@ namespace LevelUpChoices.Artifacts
                 Xoroshiro128Plus rng = Run.instance.treasureRng;
                 ItemIndex chosenItem = pool[rng.RangeInt(0, pool.Count)];
 
-                _monsterTeamInventory.GiveItemPermanent(chosenItem, 1);
+                s_monsterTeamInventory.GiveItemPermanent(chosenItem, 1);
 
                 // Give to existing monsters
-                foreach (var master in CharacterMaster.readOnlyInstancesList)
+                foreach (CharacterMaster master in CharacterMaster.readOnlyInstancesList)
                 {
                     if (master.teamIndex == TeamIndex.Monster && master.inventory)
                     {
@@ -309,7 +308,7 @@ namespace LevelUpChoices.Artifacts
             }
             else
             {
-                Log.Warning($"Pool for sequence index {sequenceIndex} is empty! Pool size T1: {_tier1Items.Count}, T2: {_tier2Items.Count}, T3: {_tier3Items.Count}");
+                Log.Warning($"Pool for sequence index {sequenceIndex} is empty! Pool size T1: {s_tier1Items.Count}, T2: {s_tier2Items.Count}, T3: {s_tier3Items.Count}");
             }
         }
     }

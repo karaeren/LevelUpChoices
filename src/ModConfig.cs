@@ -28,29 +28,29 @@ namespace LevelUpChoices
         public static ConfigEntry<bool> EnableMonsterLevelScaling { get; private set; }
         public static ConfigEntry<int> MaxLevel { get; private set; }
 
-        public static int MaxLevelValue => _maxLevelOverride ?? MaxLevel.Value;
-        private static int? _maxLevelOverride;
+        public static int MaxLevelValue => s_maxLevelOverride ?? MaxLevel.Value;
+        private static int? s_maxLevelOverride;
 
-        public static bool EnableMonsterLevelScalingValue => _enableMonsterLevelScalingOverride ?? EnableMonsterLevelScaling.Value;
-        private static bool? _enableMonsterLevelScalingOverride;
+        public static bool EnableMonsterLevelScalingValue => s_enableMonsterLevelScalingOverride ?? EnableMonsterLevelScaling.Value;
+        private static bool? s_enableMonsterLevelScalingOverride;
 
-        public static bool EnableCustomLevelSystemValue => _enableCustomLevelSystemOverride ?? EnableCustomLevelSystem.Value;
-        private static bool? _enableCustomLevelSystemOverride;
+        public static bool EnableCustomLevelSystemValue => s_enableCustomLevelSystemOverride ?? EnableCustomLevelSystem.Value;
+        private static bool? s_enableCustomLevelSystemOverride;
 
         public static void UpdateServerConfig(int maxLevel, bool monsterScaling, bool customLevel)
         {
-            _maxLevelOverride = maxLevel;
-            _enableMonsterLevelScalingOverride = monsterScaling;
-            _enableCustomLevelSystemOverride = customLevel;
+            s_maxLevelOverride = maxLevel;
+            s_enableMonsterLevelScalingOverride = monsterScaling;
+            s_enableCustomLevelSystemOverride = customLevel;
             Log.Info($"Server config synced: MaxLevel={maxLevel}, MonsterScaling={monsterScaling}, CustomLevel={customLevel}");
             OnServerConfigSynced?.Invoke();
         }
 
         public static void ResetServerConfig()
         {
-            _maxLevelOverride = null;
-            _enableMonsterLevelScalingOverride = null;
-            _enableCustomLevelSystemOverride = null;
+            s_maxLevelOverride = null;
+            s_enableMonsterLevelScalingOverride = null;
+            s_enableCustomLevelSystemOverride = null;
         }
 
         public static event System.Action OnServerConfigSynced;
@@ -192,7 +192,7 @@ namespace LevelUpChoices
             {
                 string pluginDir = System.IO.Path.GetDirectoryName(pluginInfo.Location);
                 string folderName = System.IO.Path.Combine(pluginDir, "icons");
-                var files = Directory.GetFiles(folderName);
+                string[] files = Directory.GetFiles(folderName);
                 if (files.Length > 0)
                 {
                     string file = files[0];

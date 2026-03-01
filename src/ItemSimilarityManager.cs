@@ -8,7 +8,7 @@ namespace LevelUpChoices
 {
     public static class ItemSimilarityManager
     {
-        private static readonly HashSet<string> StopWords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> s_stopWords = new(StringComparer.OrdinalIgnoreCase)
         {
             "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "with", "by", "of", "from",
             "is", "are", "was", "were", "it", "this", "that", "these", "those", "you", "your", "we", "our",
@@ -25,7 +25,7 @@ namespace LevelUpChoices
                 return word[..^3] + "y";
             if (word.EndsWith("es"))
                 return word[..^2];
-            if (word.EndsWith("s") && !word.EndsWith("ss"))
+            if (word.EndsWith('s') && !word.EndsWith("ss"))
                 return word[..^1];
             if (word.EndsWith("ing"))
                 return word[..^3];
@@ -45,12 +45,12 @@ namespace LevelUpChoices
             // Remove numbers and percentages
             text = Regex.Replace(text, @"\b\d+%?\b", "");
 
-            var matches = Regex.Matches(text.ToLowerInvariant(), @"[a-z]+");
+            MatchCollection matches = Regex.Matches(text.ToLowerInvariant(), @"[a-z]+");
             var tokens = new List<string>();
             foreach (Match match in matches)
             {
-                var word = match.Value;
-                if (!StopWords.Contains(word))
+                string word = match.Value;
+                if (!s_stopWords.Contains(word))
                 {
                     tokens.Add(Stem(word));
                 }
@@ -71,9 +71,9 @@ namespace LevelUpChoices
             Log.Info("Initializing ItemSimilarityManager...");
 
             var validItems = new List<ItemDef>();
-            foreach (var itemIndex in ItemCatalog.allItems)
+            foreach (ItemIndex itemIndex in ItemCatalog.allItems)
             {
-                var def = ItemCatalog.GetItemDef(itemIndex);
+                ItemDef def = ItemCatalog.GetItemDef(itemIndex);
                 if (def != null && !def.hidden && def.tier != ItemTier.NoTier)
                 {
                     validItems.Add(def);
@@ -81,7 +81,7 @@ namespace LevelUpChoices
             }
 
             var itemTokens = new Dictionary<ItemIndex, List<string>>();
-            foreach (var item in validItems)
+            foreach (ItemDef item in validItems)
             {
                 string name = !string.IsNullOrEmpty(item.nameToken) ? Language.GetString(item.nameToken) : "";
                 string desc = !string.IsNullOrEmpty(item.descriptionToken) ? Language.GetString(item.descriptionToken) : "";
@@ -90,12 +90,12 @@ namespace LevelUpChoices
             }
 
             var documentFrequency = new Dictionary<string, int>();
-            foreach (var tokens in itemTokens.Values)
+            foreach (List<string> tokens in itemTokens.Values)
             {
-                foreach (var term in tokens.Distinct())
+                foreach (string term in tokens.Distinct())
                 {
-                    if (documentFrequency.ContainsKey(term))
-                        documentFrequency[term]++;
+                    if (documentFrequency.TryGetValue(term, out int value))
+                        documentFrequency[term] = ++value;
                     else
                         documentFrequency[term] = 1;
                 }
@@ -103,22 +103,22 @@ namespace LevelUpChoices
 
             int N = validItems.Count;
             var idf = new Dictionary<string, double>();
-            foreach (var kvp in documentFrequency)
+            foreach (KeyValuePair<string, int> kvp in documentFrequency)
             {
                 idf[kvp.Key] = Math.Log((double)N / kvp.Value) + 1;
             }
 
             var tfIdfVectors = new Dictionary<ItemIndex, Dictionary<string, double>>();
-            foreach (var kvp in itemTokens)
+            foreach (KeyValuePair<ItemIndex, List<string>> kvp in itemTokens)
             {
-                var itemIndex = kvp.Key;
-                var tokens = kvp.Value;
+                ItemIndex itemIndex = kvp.Key;
+                List<string> tokens = kvp.Value;
                 var tfIdf = new Dictionary<string, double>();
 
                 var termCounts = tokens.GroupBy(t => t).ToDictionary(g => g.Key, g => g.Count());
                 int totalTerms = tokens.Count;
 
-                foreach (var termKvp in termCounts)
+                foreach (KeyValuePair<string, int> termKvp in termCounts)
                 {
                     string term = termKvp.Key;
                     int count = termKvp.Value;
@@ -131,24 +131,24 @@ namespace LevelUpChoices
 
             double similarityThreshold = ModConfig.SimilarityThreshold.Value;
 
-            foreach (var item in validItems)
+            foreach (ItemDef item in validItems)
             {
-                var vecA = tfIdfVectors[item.itemIndex];
+                Dictionary<string, double> vecA = tfIdfVectors[item.itemIndex];
                 var similarities = new List<(ItemIndex OtherItem, double Score)>();
 
-                foreach (var otherItem in validItems)
+                foreach (ItemDef otherItem in validItems)
                 {
                     if (item.itemIndex == otherItem.itemIndex)
                         continue;
 
-                    var vecB = tfIdfVectors[otherItem.itemIndex];
+                    Dictionary<string, double> vecB = tfIdfVectors[otherItem.itemIndex];
                     double dotProduct = 0;
                     double normA = 0;
                     double normB = 0;
 
-                    foreach (var kvp in vecA)
+                    foreach (KeyValuePair<string, double> kvp in vecA)
                         normA += kvp.Value * kvp.Value;
-                    foreach (var kvp in vecB)
+                    foreach (KeyValuePair<string, double> kvp in vecB)
                         normB += kvp.Value * kvp.Value;
 
                     normA = Math.Sqrt(normA);
@@ -157,7 +157,7 @@ namespace LevelUpChoices
                     if (normA == 0 || normB == 0)
                         continue;
 
-                    foreach (var kvp in vecA)
+                    foreach (KeyValuePair<string, double> kvp in vecA)
                     {
                         if (vecB.TryGetValue(kvp.Key, out double valB))
                         {
