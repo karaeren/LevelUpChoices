@@ -18,6 +18,20 @@ namespace LevelUpChoices
 
         private static readonly HashSet<NetworkInstanceId> activePickers = [];
 
+        public static bool HasActivePickers => activePickers.Count > 0;
+
+        public static void SuspendSinglePlayerPause()
+        {
+            if (pausedByUs && IsSinglePlayer())
+                UnpauseSinglePlayer();
+        }
+
+        public static void ResumeSinglePlayerPause()
+        {
+            if (pausedByUs && IsSinglePlayer())
+                Time.timeScale = 0f;
+        }
+
         public static void Pause()
         {
             if (!ModConfig.PauseOnItemSelect.Value)

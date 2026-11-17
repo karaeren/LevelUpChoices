@@ -36,6 +36,7 @@ namespace LevelUpChoices
 
         // Server side state
         private readonly Dictionary<NetworkInstanceId, PlayerState> playerStates = [];
+        private Xoroshiro128Plus itemRng;
 
         private void Awake()
         {
@@ -45,13 +46,24 @@ namespace LevelUpChoices
 
             // Global hooks
             ExperienceHook.OnLevelUp += OnLevelUp;
+            Run.onRunStartGlobal += OnRunStart;
             Run.onRunDestroyGlobal += OnRunDestroy;
         }
 
         private void OnDestroy()
         {
             ExperienceHook.OnLevelUp -= OnLevelUp;
+            Run.onRunStartGlobal -= OnRunStart;
             Run.onRunDestroyGlobal -= OnRunDestroy;
+        }
+
+        private void OnRunStart(Run run)
+        {
+            if (NetworkServer.active)
+            {
+                // fixed salt seed is "Eren"
+                itemRng = new Xoroshiro128Plus(run.seed ^ 0x4572656EUL);
+            }
         }
 
         private void OnLevelUp(uint newLevel)
@@ -110,6 +122,7 @@ namespace LevelUpChoices
 
         private void OnRunDestroy(Run run)
         {
+            itemRng = null;
             AvailableTokens = 0;
             BanishTokens = 0;
             RerollTokens = 0;
@@ -259,7 +272,8 @@ namespace LevelUpChoices
             var banishExclude = new List<ItemIndex>(state.CurrentOptions);
             banishExclude.RemoveAt(slotIndex);
 
-            var (RolledItem, SynergizedWith) = RollSingleSlot(netId, state, banishExclude);
+            float luck = GetPlayerLuck(netId);
+            var (RolledItem, SynergizedWith) = RollSingleSlot(itemRng, netId, state, banishExclude, luck);
             state.CurrentOptions[slotIndex] = RolledItem;
             if (slotIndex < state.CurrentSynergies.Count)
             {
@@ -287,7 +301,8 @@ namespace LevelUpChoices
             var rerollExclude = new List<ItemIndex>(state.CurrentOptions);
             rerollExclude.RemoveAt(slotIndex);
 
-            var (RolledItem, SynergizedWith) = RollSingleSlot(netId, state, rerollExclude);
+            float luck = GetPlayerLuck(netId);
+            var (RolledItem, SynergizedWith) = RollSingleSlot(itemRng, netId, state, rerollExclude, luck);
             state.CurrentOptions[slotIndex] = RolledItem;
             if (slotIndex < state.CurrentSynergies.Count)
             {
@@ -298,11 +313,9 @@ namespace LevelUpChoices
             SyncOptions(netId);
         }
 
-        private static (ItemIndex RolledItem, ItemIndex SynergizedWith) RollSingleSlot(NetworkInstanceId netId, PlayerState state, List<ItemIndex> exclude)
+        private static (ItemIndex RolledItem, ItemIndex SynergizedWith) RollSingleSlot(Xoroshiro128Plus rng, NetworkInstanceId netId, PlayerState state, List<ItemIndex> exclude, float luck)
         {
-            float luck = GetPlayerLuck(netId);
-
-            ItemIndex normallyRolled = state.DropTable.Roll(luck, exclude);
+            ItemIndex normallyRolled = state.DropTable.Roll(rng, luck, exclude);
             if (normallyRolled == ItemIndex.None)
             {
                 Log.Warning($"Rolled invalid normallyRolled item, skipping slot.");
@@ -314,7 +327,7 @@ namespace LevelUpChoices
             var normalDef = ItemCatalog.GetItemDef(normallyRolled);
             if (normalDef != null)
             {
-                var (newRolled, newSynergy) = TryRollSimilarItem(netId, exclude, state.DropTable, normalDef.tier);
+                var (newRolled, newSynergy) = TryRollSimilarItem(rng, netId, exclude, state.DropTable, normalDef.tier);
                 if (newRolled != ItemIndex.None)
                 {
                     rolled = newRolled;
@@ -333,9 +346,9 @@ namespace LevelUpChoices
             return (rolled, synergizedWith);
         }
 
-        private static (ItemIndex RolledItem, ItemIndex SynergizedWith) TryRollSimilarItem(NetworkInstanceId netId, List<ItemIndex> exclude, PlayerDropTable dropTable, ItemTier targetTier)
+        private static (ItemIndex RolledItem, ItemIndex SynergizedWith) TryRollSimilarItem(Xoroshiro128Plus rng, NetworkInstanceId netId, List<ItemIndex> exclude, PlayerDropTable dropTable, ItemTier targetTier)
         {
-            if (Random.Range(0f, 100f) >= ModConfig.SimilarItemChance.Value)
+            if (rng.RangeFloat(0f, 100f) >= ModConfig.SimilarItemChance.Value)
             {
                 return (ItemIndex.None, ItemIndex.None);
             }
@@ -368,7 +381,7 @@ namespace LevelUpChoices
                 return (ItemIndex.None, ItemIndex.None);
 
             var topItems = ownedItems.OrderByDescending(x => x.Count).Take(5).ToList();
-            var chosenBaseItem = topItems[Random.Range(0, topItems.Count)].Item;
+            var chosenBaseItem = topItems[rng.RangeInt(0, topItems.Count)].Item;
 
             if (ItemSimilarityManager.SimilarItemsMap.TryGetValue(chosenBaseItem, out var similarItems))
             {
@@ -396,9 +409,10 @@ namespace LevelUpChoices
             state.CurrentOptions.Clear();
             state.CurrentSynergies.Clear();
             int choiceCount = Mathf.Max(1, ModConfig.ItemChoiceCount.Value);
+            float luck = GetPlayerLuck(netId);
             for (int i = 0; i < choiceCount; i++)
             {
-                var (RolledItem, SynergizedWith) = RollSingleSlot(netId, state, state.CurrentOptions);
+                var (RolledItem, SynergizedWith) = RollSingleSlot(itemRng, netId, state, state.CurrentOptions, luck);
                 if (RolledItem == ItemIndex.None)
                     continue;
 
@@ -419,6 +433,9 @@ namespace LevelUpChoices
         {
             if (ModConfig.ToggleMenuKey.Value.IsDown())
             {
+                if (GetComponent<UI.Integration.UIPauseIntegration>().IsPaused)
+                    return;
+
                 if (ItemSelectUI.Instance)
                 {
                     if (ItemSelectUI.Instance.IsVisible)

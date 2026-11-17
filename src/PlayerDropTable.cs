@@ -181,10 +181,10 @@ namespace LevelUpChoices
             return _weights.TryGetValue(item, out float w) && w > 0f;
         }
 
-        public ItemIndex Roll(float luck = 0f, ICollection<ItemIndex> exclude = null)
+        public ItemIndex Roll(Xoroshiro128Plus rng, float luck = 0f, ICollection<ItemIndex> exclude = null)
         {
             int extraRolls = Mathf.FloorToInt(Mathf.Abs(luck));
-            if (Random.value < Mathf.Abs(luck) - extraRolls)
+            if (rng.nextNormalizedFloat < Mathf.Abs(luck) - extraRolls)
             {
                 extraRolls++;
             }
@@ -195,7 +195,7 @@ namespace LevelUpChoices
 
             for (int i = 0; i < rolls; i++)
             {
-                ItemIndex roll = RollSingle(exclude);
+                ItemIndex roll = RollSingle(rng, exclude);
                 if (roll == ItemIndex.None)
                     continue;
 
@@ -219,10 +219,10 @@ namespace LevelUpChoices
                 }
             }
 
-            return bestResult != ItemIndex.None ? bestResult : RollSingle(exclude);
+            return bestResult != ItemIndex.None ? bestResult : RollSingle(rng, exclude);
         }
 
-        private ItemIndex RollSingle(ICollection<ItemIndex> exclude = null)
+        private ItemIndex RollSingle(Xoroshiro128Plus rng, ICollection<ItemIndex> exclude = null)
         {
             // Compute total weight of eligible items
             float total = 0f;
@@ -239,7 +239,7 @@ namespace LevelUpChoices
                 return ItemIndex.None;
             }
 
-            float roll = Random.value * total;
+            float roll = rng.nextNormalizedFloat * total;
             float cumulative = 0f;
             ItemIndex last = ItemIndex.None;
 

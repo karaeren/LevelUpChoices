@@ -1,3 +1,9 @@
+## 1.1.5
+
+- Fixed item picker and ESC menu conflicts. The picker should be hidden whenever the actual game menu is open and come back when you close it, respecting your pause settings.
+- Item rolls now use their own random seed based on the run seed, so they won't affect the game's other loot rolls.
+- Improved performance by reducing unnecessary recalculations when generating item options.
+
 ## 1.1.4
 
 - Updated game references and dependencies for Risk of Rain 2 1.5, including the Hallowed Concepts update.
