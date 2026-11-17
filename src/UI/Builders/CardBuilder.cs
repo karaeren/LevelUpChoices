@@ -92,8 +92,11 @@ namespace LevelUpChoices.UI.Builders
             var iconImg = iconGo2.AddComponent<Image>();
             iconImg.color = Color.white;
             iconImg.preserveAspect = true;
-            if (pickupDef?.iconSprite != null)
-                iconImg.sprite = pickupDef.iconSprite;
+            if (pickupDef != null)
+            {
+                var asyncIcon = iconGo2.AddComponent<RoR2.UI.AsyncImage>();
+                asyncIcon.SetAssetOrDirectReference(pickupDef.iconSpriteReference, pickupDef.iconSprite);
+            }
 
             // Name spacer
             _elementBuilder.MakeSpacer(card.transform, "NameSpacer", 2f, 2f, 0f);

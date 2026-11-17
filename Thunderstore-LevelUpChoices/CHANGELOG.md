@@ -1,3 +1,9 @@
+## 1.1.4
+
+- Updated game references and dependencies for Risk of Rain 2 1.5, including the Hallowed Concepts update.
+- Updated LookingGlass and Risk of Options integration libraries.
+- Updated item cards to load addressable item icons while retaining support for modded sprite icons.
+
 ## 1.1.3
 
 - Added a new artifact called "Artifact of Equality". When enabled, monsters will get a new item every time they level up. After all, we're all equal in death.
