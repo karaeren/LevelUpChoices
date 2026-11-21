@@ -37,7 +37,6 @@ namespace LevelUpChoices
             Artifacts.EqualityArtifact.Init(Info);
             ItemCatalog.availability.CallWhenAvailable(Integrations.Init);
             ItemCatalog.availability.CallWhenAvailable(ItemSimilarityManager.Initialize);
-            ItemCatalog.availability.CallWhenAvailable(Artifacts.EqualityArtifact.InitItems);
 
             // Register Network Messages
             NetworkingAPI.RegisterMessageType<Networking.SyncPlayerState>();
@@ -47,6 +46,7 @@ namespace LevelUpChoices
             NetworkingAPI.RegisterMessageType<Networking.SendReroll>();
             NetworkingAPI.RegisterMessageType<Networking.SendPickingState>();
             NetworkingAPI.RegisterMessageType<Networking.SyncConfig>();
+            NetworkingAPI.RegisterMessageType<Networking.SendChooseItemInstead>();
 
             // Init Managers
             var logicObject = new GameObject("LevelUpLogic");

@@ -10,6 +10,9 @@ namespace LevelUpChoices
     // Banished items are permanently removed from the table.
     public class PlayerDropTable
     {
+        private const int MidpointPickCount = 14;
+        internal const int LateWeightPickCount = 36;
+
         public static readonly HashSet<string> BannedItemNames =
         [
             // Base game
@@ -46,7 +49,7 @@ namespace LevelUpChoices
                     skipReason = "IGNORE_FOR_DROP_LIST";
                 if (!enableScraps && (def.tags.Contains(ItemTag.Scrap) || def.tags.Contains(ItemTag.PriorityScrap)))
                     skipReason = "SCRAP_ON_NON_DRIFTER";
-                if (BannedItemNames.Contains(def.name))
+                if (BannedItemNames.Contains(def.name) || ModConfig.IsItemBlacklisted(def.name))
                     skipReason = "BANNED";
                 // Only include tiers we actually weight; skip Void, NoTier, etc.
                 if (def.tier is not (ItemTier.Tier1 or ItemTier.Tier2 or ItemTier.Tier3
@@ -70,12 +73,10 @@ namespace LevelUpChoices
                 }
                 catch { /* Run may not be active */ }
 
-                if (ModConfig.EnableInteractableRemoval.Value && (
-                    def.name == "TreasureCache" || def.name == "ExtraShrineItem"
-                    || def.name == "LowerPricedChests" || def.name == "MultiShopCard"
-                    || def.name == "ITEM_SANDSWEPT_HALLOWED_ICHOR" || def.name == "ITEM_SANDSWEPT_SEQUENCED_FATE"
-                    || def.name == "ITEM_SANDSWEPT_UNIVERSAL_VIP_PASS" || def.name == "PrimalBirthright"
-                    ))
+                if (ModConfig.EnableInteractableRemoval.Value && def.name is
+                    "TreasureCache" or "TreasureCacheVoid" or "FreeChest" or "ExtraShrineItem"
+                    or "LowerPricedChests" or "MultiShopCard" or "PrimalBirthright"
+                    or "ITEM_SANDSWEPT_HALLOWED_ICHOR" or "ITEM_SANDSWEPT_SEQUENCED_FATE" or "ITEM_SANDSWEPT_UNIVERSAL_VIP_PASS")
                     skipReason = "INTERACTABLE_REMOVAL_ENABLED";
 
                 if (!runExists)
@@ -101,44 +102,23 @@ namespace LevelUpChoices
         }
 
         // Update every item's weight based on the current UsedTokens value.
-        // Skips recalculation if tokens>30 (late game) and weights are already at the cap,
-        // or if UsedTokens hasn't changed since last call.
+        // Reuse the previous weights if the pick count is unchanged or the curve is already at its end.
         public void RecalculateWeights(int usedTokens)
         {
-            if (usedTokens == _lastCalculatedTokens)
-                return;
-            if (usedTokens > 30 && _lastCalculatedTokens >= 30)
+            if (usedTokens == _lastCalculatedTokens || (usedTokens >= LateWeightPickCount && _lastCalculatedTokens >= LateWeightPickCount))
                 return;
             _lastCalculatedTokens = usedTokens;
 
-            // --- Two-phase lerp (early → late configurable weights) ---
-            float t1to2 = Mathf.Clamp01(usedTokens / 10f);
-            float t2to3 = Mathf.Clamp01((usedTokens - 10f) / 20f);
+            // Reach half the late-game weighting at pick 14, then finish the curve at pick 36.
+            float progress = usedTokens <= MidpointPickCount
+                ? Mathf.InverseLerp(0, MidpointPickCount, usedTokens) * 0.5f
+                : 0.5f + Mathf.InverseLerp(MidpointPickCount, LateWeightPickCount, usedTokens) * 0.5f;
 
-            float earlyT1 = ModConfig.EarlyWeightTier1.Value;
-            float earlyT2 = ModConfig.EarlyWeightTier2.Value;
-            float earlyT3 = ModConfig.EarlyWeightTier3.Value;
-            float earlyLunar = ModConfig.EarlyWeightLunar.Value;
-            float earlyBoss = ModConfig.EarlyWeightBoss.Value;
-
-            float lateT1 = ModConfig.LateWeightTier1.Value;
-            float lateT2 = ModConfig.LateWeightTier2.Value;
-            float lateT3 = ModConfig.LateWeightTier3.Value;
-            float lateLunar = ModConfig.LateWeightLunar.Value;
-            float lateBoss = ModConfig.LateWeightBoss.Value;
-
-            // Mid-point is the average of early and late
-            float midT1 = (earlyT1 + lateT1) * 0.5f;
-            float midT2 = (earlyT2 + lateT2) * 0.5f;
-            float midT3 = (earlyT3 + lateT3) * 0.5f;
-            float midLunar = (earlyLunar + lateLunar) * 0.5f;
-            float midBoss = (earlyBoss + lateBoss) * 0.5f;
-
-            float w1 = Mathf.Lerp(earlyT1, Mathf.Lerp(midT1, lateT1, t2to3), t1to2);
-            float w2 = Mathf.Lerp(earlyT2, Mathf.Lerp(midT2, lateT2, t2to3), t1to2);
-            float w3 = Mathf.Lerp(earlyT3, Mathf.Lerp(midT3, lateT3, t2to3), t1to2);
-            float wLunar = Mathf.Lerp(earlyLunar, Mathf.Lerp(midLunar, lateLunar, t2to3), t1to2);
-            float wBoss = Mathf.Lerp(earlyBoss, Mathf.Lerp(midBoss, lateBoss, t2to3), t1to2);
+            float w1 = Mathf.Lerp(ModConfig.EarlyWeightTier1.Value, ModConfig.LateWeightTier1.Value, progress);
+            float w2 = Mathf.Lerp(ModConfig.EarlyWeightTier2.Value, ModConfig.LateWeightTier2.Value, progress);
+            float w3 = Mathf.Lerp(ModConfig.EarlyWeightTier3.Value, ModConfig.LateWeightTier3.Value, progress);
+            float wLunar = Mathf.Lerp(ModConfig.EarlyWeightLunar.Value, ModConfig.LateWeightLunar.Value, progress);
+            float wBoss = Mathf.Lerp(ModConfig.EarlyWeightBoss.Value, ModConfig.LateWeightBoss.Value, progress);
 
             // Use cached tiers — no GetItemDef calls, no list allocation
             foreach (var kv in _tiers)
@@ -179,6 +159,11 @@ namespace LevelUpChoices
         public bool CanDrop(ItemIndex item)
         {
             return _weights.TryGetValue(item, out float w) && w > 0f;
+        }
+
+        public bool HasEligibleItems(ICollection<ItemIndex> exclude = null)
+        {
+            return _weights.Any(kv => kv.Value > 0f && (exclude == null || !exclude.Contains(kv.Key)));
         }
 
         public ItemIndex Roll(Xoroshiro128Plus rng, float luck = 0f, ICollection<ItemIndex> exclude = null)

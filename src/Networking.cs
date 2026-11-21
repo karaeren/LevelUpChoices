@@ -227,6 +227,23 @@ namespace LevelUpChoices
             }
         }
 
+        public class SendChooseItemInstead : INetMessage
+        {
+            private NetworkInstanceId netId;
+
+            public SendChooseItemInstead() { }
+            public SendChooseItemInstead(NetworkInstanceId netId) => this.netId = netId;
+
+            public void Serialize(NetworkWriter writer) => writer.Write(netId);
+            public void Deserialize(NetworkReader reader) => netId = reader.ReadNetworkId();
+
+            public void OnReceived()
+            {
+                if (NetworkServer.active)
+                    LevelUpManager.Instance.HandleChooseItemInstead(netId);
+            }
+        }
+
         public class SyncConfig : INetMessage
         {
             int maxLevel;

@@ -1,9 +1,14 @@
+using System;
+using System.Collections.Generic;
 using System.IO;
 using BepInEx.Configuration;
+using LevelUpChoices.UI;
 using RiskOfOptions;
 using RiskOfOptions.OptionConfigs;
 using RiskOfOptions.Options;
+using RoR2;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace LevelUpChoices
 {
@@ -24,9 +29,37 @@ namespace LevelUpChoices
 
         // Server
         public static ConfigEntry<bool> EnableInteractableRemoval { get; private set; }
+        public static ConfigEntry<float> InteractableBudgetMultiplier { get; private set; }
+        public static ConfigEntry<string> ItemBlacklist { get; private set; }
+        public static ConfigEntry<bool> EnableEquipmentChoices { get; private set; }
+        public static ConfigEntry<float> EquipmentRoundChance { get; private set; }
         public static ConfigEntry<bool> EnableCustomLevelSystem { get; private set; }
         public static ConfigEntry<bool> EnableMonsterLevelScaling { get; private set; }
         public static ConfigEntry<int> MaxLevel { get; private set; }
+
+        private static readonly HashSet<string> RunItemBlacklist = new(StringComparer.OrdinalIgnoreCase);
+
+        internal static bool IsItemBlacklisted(string itemName) => RunItemBlacklist.Contains(itemName);
+
+        private static void CaptureItemBlacklist(Run run)
+        {
+            if (!NetworkServer.active)
+                return;
+
+            // Keep the same list for every player and the Artifact of Equality until the next run.
+            RunItemBlacklist.Clear();
+            RunItemBlacklist.UnionWith(ParseItemBlacklist(ItemBlacklist.Value));
+        }
+
+        internal static IEnumerable<string> ParseItemBlacklist(string value)
+        {
+            foreach (string entry in value.Split(','))
+            {
+                string itemName = entry.Trim();
+                if (itemName.Length > 0)
+                    yield return itemName;
+            }
+        }
 
         public static int MaxLevelValue => _maxLevelOverride ?? MaxLevel.Value;
         private static int? _maxLevelOverride;
@@ -71,7 +104,7 @@ namespace LevelUpChoices
         public static ConfigEntry<float> EarlyWeightLunar { get; private set; }
         public static ConfigEntry<float> EarlyWeightBoss { get; private set; }
 
-        // Tier weights (late game – 30+ tokens used)
+        // Tier weights at the end of the curve
         public static ConfigEntry<float> LateWeightTier1 { get; private set; }
         public static ConfigEntry<float> LateWeightTier2 { get; private set; }
         public static ConfigEntry<float> LateWeightTier3 { get; private set; }
@@ -115,6 +148,25 @@ namespace LevelUpChoices
             EnableInteractableRemoval = config.Bind(
                             "Server", "Remove Chests & Interactables", true,
                             "Remove chests, printers, shrines and other item-giving interactables from stages.");
+
+            InteractableBudgetMultiplier = config.Bind(
+                "Server", "Interactable Budget Multiplier", 0.9f,
+                new ConfigDescription("Host setting. Scales the stage director's interactable budget when LevelUpChoices is enabled. 1 uses the normal budget. Changes apply on the next stage.",
+                    new AcceptableValueRange<float>(0f, 2f)));
+
+            ItemBlacklist = config.Bind(
+                "Server", "Item Blacklist", string.Empty,
+                "Host setting. Comma-separated internal item names, e.g. Syringe, Bear. Excludes them from player choices and Artifact of Equality enemy grants. Changes apply on the next run.");
+            Run.onRunStartGlobal += CaptureItemBlacklist;
+
+            EnableEquipmentChoices = config.Bind(
+                "Server", "Enable Equipment Choices", true,
+                "Host setting. Offer equipment on each player's tenth selection round, then randomly on later rounds. Equipment rounds cannot occur back-to-back.");
+
+            EquipmentRoundChance = config.Bind(
+                "Server", "Equipment Round Chance", 12f,
+                new ConfigDescription("Host setting. Percent chance to offer equipment after round ten. Equipment offers are spaced at least one round apart, even if you choose items instead.",
+                    new AcceptableValueRange<float>(0f, 100f)));
 
             EnableCustomLevelSystem = config.Bind(
                 "Server", "Enable Level System", true,
@@ -162,11 +214,11 @@ namespace LevelUpChoices
                 "The minimum TF-IDF cosine similarity score required (0.0 to 1.0) for two items to be considered similar.");
 
             // Early tier weights
-            EarlyWeightTier1 = config.Bind("Server", "Early Weight – Common", 79f,
+            EarlyWeightTier1 = config.Bind("Server", "Early Weight – Common", 77f,
                 "Category weight for Common (Tier 1) items at 0 tokens used.");
-            EarlyWeightTier2 = config.Bind("Server", "Early Weight – Uncommon", 15f,
+            EarlyWeightTier2 = config.Bind("Server", "Early Weight – Uncommon", 19f,
                 "Category weight for Uncommon (Tier 2) items at 0 tokens used.");
-            EarlyWeightTier3 = config.Bind("Server", "Early Weight – Legendary", 4f,
+            EarlyWeightTier3 = config.Bind("Server", "Early Weight – Legendary", 2f,
                 "Category weight for Legendary (Tier 3) items at 0 tokens used.");
             EarlyWeightLunar = config.Bind("Server", "Early Weight – Lunar", 1f,
                 "Category weight for Lunar items at 0 tokens used.");
@@ -174,16 +226,16 @@ namespace LevelUpChoices
                 "Category weight for Boss items at 0 tokens used.");
 
             // Late tier weights
-            LateWeightTier1 = config.Bind("Server", "Late Weight – Common", 20f,
-                "Category weight for Common (Tier 1) items at 30+ tokens used.");
+            LateWeightTier1 = config.Bind("Server", "Late Weight – Common", 21f,
+                $"Category weight for Common (Tier 1) items at {PlayerDropTable.LateWeightPickCount}+ tokens used.");
             LateWeightTier2 = config.Bind("Server", "Late Weight – Uncommon", 41f,
-                "Category weight for Uncommon (Tier 2) items at 30+ tokens used.");
-            LateWeightTier3 = config.Bind("Server", "Late Weight – Legendary", 21f,
-                "Category weight for Legendary (Tier 3) items at 30+ tokens used.");
+                $"Category weight for Uncommon (Tier 2) items at {PlayerDropTable.LateWeightPickCount}+ tokens used.");
+            LateWeightTier3 = config.Bind("Server", "Late Weight – Legendary", 20f,
+                $"Category weight for Legendary (Tier 3) items at {PlayerDropTable.LateWeightPickCount}+ tokens used.");
             LateWeightLunar = config.Bind("Server", "Late Weight – Lunar", 10f,
-                "Category weight for Lunar items at 30+ tokens used.");
+                $"Category weight for Lunar items at {PlayerDropTable.LateWeightPickCount}+ tokens used.");
             LateWeightBoss = config.Bind("Server", "Late Weight – Boss", 8f,
-                "Category weight for Boss items at 30+ tokens used.");
+                $"Category weight for Boss items at {PlayerDropTable.LateWeightPickCount}+ tokens used.");
 
             // Register with Risk Of Options
             ModSettingsManager.SetModDescription("Level Up Choices – pick items when your team levels up.");
@@ -239,6 +291,14 @@ namespace LevelUpChoices
         private static void RegisterServerOptions()
         {
             ModSettingsManager.AddOption(new CheckBoxOption(EnableInteractableRemoval));
+            ModSettingsManager.AddOption(new StepSliderOption(InteractableBudgetMultiplier,
+                new StepSliderConfig { min = 0f, max = 2f, increment = 0.05f, FormatString = "{0:0.00}x" }));
+            ModSettingsManager.AddOption(new GenericButtonOption("Item Blacklist", "Server",
+                "Edit the items excluded from player choices and Artifact of Equality enemy grants. Changes apply on the next run.",
+                "Edit", ItemBlacklistEditor.Open));
+            ModSettingsManager.AddOption(new CheckBoxOption(EnableEquipmentChoices));
+            ModSettingsManager.AddOption(new SliderOption(EquipmentRoundChance,
+                new SliderConfig { min = 0f, max = 100f, FormatString = "{0:0}%" }));
             ModSettingsManager.AddOption(new CheckBoxOption(EnableCustomLevelSystem));
             ModSettingsManager.AddOption(new CheckBoxOption(EnableMonsterLevelScaling));
 

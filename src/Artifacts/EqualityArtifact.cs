@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using R2API;
 using RoR2;
 using RoR2.ContentManagement;
@@ -23,9 +22,9 @@ namespace LevelUpChoices.Artifacts
         private static int _itemGrantsCount = 0;
         private static Inventory _monsterTeamInventory;
 
-        private static List<ItemIndex> _tier1Items = new();
-        private static List<ItemIndex> _tier2Items = new();
-        private static List<ItemIndex> _tier3Items = new();
+        private static readonly List<ItemIndex> _tier1Items = new();
+        private static readonly List<ItemIndex> _tier2Items = new();
+        private static readonly List<ItemIndex> _tier3Items = new();
 
         public IEnumerator LoadStaticContentAsync(LoadStaticContentAsyncArgs args)
         {
@@ -117,20 +116,16 @@ namespace LevelUpChoices.Artifacts
             }
         }
 
-        [SystemInitializer(typeof(ItemCatalog))]
-        public static void InitItems()
+        private static void BuildItemPools()
         {
-            if (_tier1Items.Count > 0)
-                return; // Already initialized
-
             _tier1Items.Clear();
             _tier2Items.Clear();
             _tier3Items.Clear();
 
-            // Build item lists when catalog is ready
+            // Rebuild for each run so the pools use the host's latest blacklist.
             foreach (var itemDef in ItemCatalog.allItemDefs)
             {
-                if (
+                if (ModConfig.IsItemBlacklisted(itemDef.name) ||
                     itemDef.ContainsTag(ItemTag.AIBlacklist) ||
                     itemDef.ContainsTag(ItemTag.OnKillEffect) ||
                     itemDef.ContainsTag(ItemTag.SprintRelated) ||
@@ -220,6 +215,7 @@ namespace LevelUpChoices.Artifacts
             {
                 _itemGrantsCount = 0;
                 _lastMonsterLevel = 1; // Reset to 1 for the new run
+                BuildItemPools();
 
                 if (IsEnabled())
                 {

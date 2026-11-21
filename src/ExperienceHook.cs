@@ -24,7 +24,7 @@ namespace LevelUpChoices
         private bool lastEnableCustomLevelSystem = false;
         private bool lastEnableMonsterLevelScaling = false;
 
-        private const double XP_BASE = 20.0;
+        private const double XP_BASE = 21.0;
         private const double XP_BUFFER = 100000.0;
         private const double SEARCH_LOW = 1.000001;
         private const double SEARCH_HIGH = 100.0;

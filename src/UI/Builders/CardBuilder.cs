@@ -1,7 +1,5 @@
 using System;
-using LevelUpChoices;
 using LevelUpChoices.Extensions;
-using LevelUpChoices.UI;
 using LevelUpChoices.UI.Constants;
 using LevelUpChoices.UI.Services;
 using RoR2;
@@ -30,6 +28,7 @@ namespace LevelUpChoices.UI.Builders
         {
             var pickupDef = PickupCatalog.GetPickupDef(pickupIndex);
             var itemDef = ItemCatalog.GetItemDef(pickupDef?.itemIndex ?? ItemIndex.None);
+            var equipmentDef = EquipmentCatalog.GetEquipmentDef(pickupDef?.equipmentIndex ?? EquipmentIndex.None);
 
             Color tierColor = Color.white;
 
@@ -38,6 +37,10 @@ namespace LevelUpChoices.UI.Builders
                 var tierDef = ItemTierCatalog.GetItemTierDef(itemDef.tier);
                 if (tierDef != null)
                     tierColor = ColorCatalog.GetColor(tierDef.colorIndex);
+            }
+            else if (equipmentDef != null)
+            {
+                tierColor = ColorCatalog.GetColor(equipmentDef.colorIndex);
             }
 
             var card = new GameObject($"Card_{slotIndex}");
@@ -84,17 +87,17 @@ namespace LevelUpChoices.UI.Builders
             iconBg.color = UIColors.GetIconBackgroundColor(tierColor);
 
             // Icon sprite
-            var iconGo2 = _elementBuilder.MakeUIObject("IconSprite", iconGo.transform,
+            var iconSprite = _elementBuilder.MakeUIObject("IconSprite", iconGo.transform,
                 new Vector2(0.15f, 0.15f), new Vector2(0.85f, 0.85f), new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
-            var iconRect = iconGo2.GetComponent<RectTransform>();
-            iconRect.offsetMin = Vector2.zero;
-            iconRect.offsetMax = Vector2.zero;
-            var iconImg = iconGo2.AddComponent<Image>();
+            var iconImg = iconSprite.AddComponent<Image>();
             iconImg.color = Color.white;
             iconImg.preserveAspect = true;
+            iconImg.enabled = false; // An Image with no sprite draws a white rectangle.
             if (pickupDef != null)
             {
-                var asyncIcon = iconGo2.AddComponent<RoR2.UI.AsyncImage>();
+                var asyncIcon = iconSprite.AddComponent<AsyncImage>();
+                asyncIcon.renderer = iconImg;
+                asyncIcon.disableWhileLoading = true;
                 asyncIcon.SetAssetOrDirectReference(pickupDef.iconSpriteReference, pickupDef.iconSprite);
             }
 
@@ -103,11 +106,15 @@ namespace LevelUpChoices.UI.Builders
 
             // Owned count lookup
             var localMaster = LocalUserManager.GetFirstLocalUser()?.cachedMaster;
-            int ownedCount = localMaster?.inventory?.GetItemCountEffective(itemDef?.itemIndex ?? ItemIndex.None) ?? 0;
+            int ownedCount = itemDef != null
+                ? localMaster?.inventory?.GetItemCountEffective(itemDef.itemIndex) ?? 0
+                : 0;
 
             // Name label
-            string displayName = itemDef != null ? Language.GetString(itemDef.nameToken) : "Unknown";
+            string displayName = pickupDef != null ? Language.GetString(pickupDef.nameToken) : "Unknown";
             displayName += ownedCount > 0 ? $"  <style=cIsHealing>({ownedCount})</style>" : "";
+            if (equipmentDef != null && (localMaster?.inventory?.HasEquipment(equipmentDef.equipmentIndex) ?? false))
+                displayName += "  <style=cIsHealing>(Owned)</style>";
 
             if (synergy != ItemIndex.None)
             {
@@ -132,11 +139,23 @@ namespace LevelUpChoices.UI.Builders
             nameLabelGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             // Description
-            if (ModConfig.ShowItemDescriptions.Value && itemDef != null)
+            if (ModConfig.ShowItemDescriptions.Value && (itemDef != null || equipmentDef != null))
             {
-                string desc = "\n" + (Integrations.lookingGlassEnabled
-                    ? LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true)
-                    : Language.GetString(itemDef.pickupToken));
+                string description;
+                if (itemDef != null)
+                {
+                    description = Integrations.lookingGlassEnabled
+                        ? LookingGlassIntegration.GetItemDescription(itemDef, ownedCount, localMaster, true)
+                        : null;
+                    description ??= Language.GetString(itemDef.pickupToken);
+                }
+                else
+                {
+                    description = Integrations.lookingGlassEnabled
+                        ? LookingGlassIntegration.GetEquipmentDescription(equipmentDef, localMaster)
+                        : Language.GetString(equipmentDef.descriptionToken);
+                }
+                string desc = "\n" + description;
                 var descLabelGo = new GameObject("Description");
                 descLabelGo.transform.SetParent(card.transform, false);
                 var descTmp = descLabelGo.AddComponent<HGTextMeshProUGUI>();

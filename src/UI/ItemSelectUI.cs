@@ -25,6 +25,7 @@ namespace LevelUpChoices.UI
 
         private GameObject canvasObject;
         private GameObject containerObject;
+        private GameObject equipmentActions;
 
         private UIAssetService assetService;
         private UIElementBuilder elementBuilder;
@@ -35,6 +36,7 @@ namespace LevelUpChoices.UI
         private NotificationPanelComponent notification;
         private ItemRowComponent itemRow;
         private UIPauseIntegration pauseIntegration;
+        private HGTextMeshProUGUI titleLabel;
 
         private float lastClickTime = 0f;
         private const float ClickCooldown = 0.15f;
@@ -96,6 +98,7 @@ namespace LevelUpChoices.UI
             // Title bar
             var titleBarContainer = TitleBarComponent.Create(containerObject.transform, elementBuilder);
             var titleBarInner = titleBarContainer.transform.Find("TitleBar");
+            titleLabel = titleBarInner.GetComponentInChildren<HGTextMeshProUGUI>();
 
             // Token header overlay (Top-Left of TitleBar)
             var headerGo = elementBuilder.MakeUIObject("TokenHeader", titleBarInner,
@@ -128,6 +131,13 @@ namespace LevelUpChoices.UI
             itemRowGo.transform.SetParent(containerObject.transform, false);
             itemRow = itemRowGo.AddComponent<ItemRowComponent>();
             itemRow.Initialize(elementBuilder);
+
+            equipmentActions = elementBuilder.MakeUIObject("EquipmentActions", containerObject.transform,
+                Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f), new Vector2(0f, 56f), Vector2.zero);
+            new ButtonBuilder(assetService).CreateAbsoluteButton(equipmentActions.transform, "Choose Item Instead",
+                new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(-122f, 12f), new Vector2(122f, 0f),
+                UIColors.RerollBg, UIColors.RerollAccent, OnChooseItemInsteadClicked);
+            equipmentActions.SetActive(false);
 
             containerObject.SetActive(false);
 
@@ -202,6 +212,11 @@ namespace LevelUpChoices.UI
         {
             if (itemRow == null)
                 return;
+
+            var firstPickup = pickupIndices.Count > 0 ? PickupCatalog.GetPickupDef(pickupIndices[0]) : null;
+            bool isEquipmentRound = firstPickup != null && firstPickup.equipmentIndex != EquipmentIndex.None;
+            titleLabel.text = isEquipmentRound ? "CHOOSE EQUIPMENT" : "CHOOSE AN ITEM";
+            equipmentActions.SetActive(isEquipmentRound);
 
             itemRow.ClearCards();
 
@@ -296,6 +311,21 @@ namespace LevelUpChoices.UI
                 new Networking.SendItemSelection(pickupIndex, netId)
                     .Send(R2API.Networking.NetworkDestination.Server);
             }
+        }
+
+        private void OnChooseItemInsteadClicked()
+        {
+            var localUsers = NetworkUser.readOnlyLocalPlayersList;
+            if (localUsers.Count == 0 || LevelUpManager.Instance.AvailableTokens <= 0 || Time.unscaledTime - lastClickTime < ClickCooldown)
+                return;
+
+            lastClickTime = Time.unscaledTime;
+            UISoundManager.PlayClick();
+            var netId = localUsers[0].netId;
+            if (NetworkServer.active)
+                LevelUpManager.Instance.HandleChooseItemInstead(netId);
+            else
+                new Networking.SendChooseItemInstead(netId).Send(R2API.Networking.NetworkDestination.Server);
         }
 
         private void OnBanishClicked(int slotIndex)

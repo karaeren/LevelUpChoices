@@ -35,3 +35,7 @@ If you think a certain mod item should be disabled or enabled, please open an is
 ## Multiplayer
 
 Each player has fully independent state — their own item options, their own banish list, their own tokens. Everything runs server-side, so the host has to have the mod. Clients need it installed too so they can select their items.
+
+## Credits
+
+Thanks to [max-arias/level-up-fixes](https://github.com/max-arias/level-up-fixes) for additional improvements on this mod.
