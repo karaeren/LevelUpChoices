@@ -1,3 +1,15 @@
+## 1.2.0
+
+- Added equipment rounds. You get equipment choices on round 10 by default. After that, there's a 12% chance of seeing them again, with at least one item round in between. You can change the chance in the settings or hit **Choose Item Instead** to pick an item that round.
+- Added a searchable item blacklist in Risk of Options. The host can block items from the picker and the Artifact of Equality. Changes apply on the next run.
+- Combat shrines are back. Interactable removal now catches more loot sources, including lockboxes and Shipping Request Form deliveries. The picker also skips the keys and forms when those sources are disabled.
+- Equipment barrels and shops are removed when equipment rounds and interactable removal are both on.
+- Slightly lowered how many interactables can spawn. The host can change that in the settings, and it takes effect on the next stage.
+- Red items are a bit rarer early on, and it takes a little more XP to level up at the start.
+- Rerolls and banishes now skip anything already on screen. If there's nothing left to roll, you keep your token.
+- F3 works while you're moving, and item icons no longer flash white between picks.
+- LookingGlass now shows more info on equipment cards.
+
 ## 1.1.5
 
 - Fixed item picker and ESC menu conflicts. The picker should be hidden whenever the actual game menu is open and come back when you close it, respecting your pause settings.

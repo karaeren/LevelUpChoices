@@ -6,54 +6,70 @@
 
 ![Demo - Config](https://raw.githubusercontent.com/karaeren/LevelUpChoices/refs/heads/main/other/demo_config.png)
 
-This mod removes most of the normal item sources from stages — chests, shrines, 3D printers, scrappers, cleansing pools, lunar pods — and replaces them with a level-up item selection system.
+This mod removes most of the normal item sources from stages, like chests and printers. You get to pick your items when your team levels up.
 
-Every time the team levels up, each player gets to pick from 3 items. Equipment barrels and Scavenger's Sacks still spawn as normal.
+Turn on the Artifact of Choice when you start a run, or use **Always Enable Mod** in Risk of Options.
 
-Almost anything such as disabling interactables, exp multipliers, rates of items are configurable in the game. It fully supports items added by 3rd party mods. LookingGlass mod is highly recommended!
+Normal barrels, combat shrines, and Scavenger's Sacks still spawn. You can change most of the settings in Risk of Options.
 
-Contact me at Discord (@erenkara) for any bugs, suggestions etc...
+For bugs or suggestions, contact me on Discord (@erenkara).
 
 ## How it works
 
-**Pick** — Choose one of the 3 items shown. Picking resets your reroll token.
+Press **F3** to open the menu when you have a pick saved up. You get up to 3 choices by default.
 
-**Reroll** — Swap one item slot for a newly rolled option. You get 1 reroll token that resets each time you pick.
+**Reroll** swaps out a choice, and **Banish** keeps it out of your picks for the rest of the run. By default, you start with 1 of each token and get another banish every 10 levels. Picking gives you your reroll token back.
 
-**Banish** — Permanently remove an item from your personal pool so it won't show up in future rolls. You start with 1 banish token and gain another every 10 levels.
+Sometimes you'll roll an item that's similar to one you already have. This makes it easier to stack items or find ones that go well together.
 
-Press **F3** at any time to open or close the selection menu.
+## Equipment rounds
 
-The items are chosen randomly based on the item tiers and your level. You can get lucky and proc a "synergy" item which will be synergistic to the items you own.
+Your 10th round gives you equipment choices. After that, they have a 12% chance of showing up, with at least one item round in between. If you want an item that round, hit **Choose Item Instead**.
+
+The host can change the chance or turn equipment rounds off. Equipment barrels and shops are removed if you have both equipment rounds and interactable removal on.
 
 ## Levels and XP
 
-You can configure the max level. By increasing the max level from 94, you can make each level easier or harder depending on the new max level.
+The default max level is 256. You can change it in the settings.
 
 ## Mod Support
 
-This mod fully supports items added by other mods. No configuration or tinkering needed! Some mod items are situationally disabled if they are unobtainable or if they are tied to interactables that are disabled.
+Items from other mods can show up in the picker too. LookingGlass adds more detail to the cards.
+
+The host can use **Item Blacklist** in Risk of Options to block items from the picker and the Artifact of Equality. The list kicks in on the next run.
 
 If you think a certain mod item should be disabled or enabled, please open an issue on GitHub.
 
 ## Multiplayer
 
-Each player has fully independent state — their own item options, their own banish list, their own tokens. Everything runs server-side, so the host has to have the mod. Clients need it installed too so they can select their items.
+You still get your own picks and tokens in multiplayer. Everyone needs the same version of the mod as the host.
 
-## TODO
+## Credits
 
-- Everything is done! (for now)
+Thanks to [max-arias/level-up-fixes](https://github.com/max-arias/level-up-fixes) for ideas behind the blacklist and interactable changes.
 
 ## Changelog
 
-### 1.1.5
+### 1.2.0
+
+- Added equipment rounds. You get equipment choices on round 10 by default. After that, there's a 12% chance of seeing them again, with at least one item round in between. You can change the chance in the settings or hit **Choose Item Instead** to pick an item that round.
+- Added a searchable item blacklist in Risk of Options. The host can block items from the picker and the Artifact of Equality. Changes apply on the next run.
+- Combat shrines are back. Interactable removal now catches more loot sources, including lockboxes and Shipping Request Form deliveries. The picker also skips the keys and forms when those sources are disabled.
+- Equipment barrels and shops are removed when equipment rounds and interactable removal are both on.
+- Slightly lowered how many interactables can spawn. The host can change that in the settings, and it takes effect on the next stage.
+- Red items are a bit rarer early on, and it takes a little more XP to level up at the start.
+- Rerolls and banishes now skip anything already on screen. If there's nothing left to roll, you keep your token.
+- F3 works while you're moving, and item icons no longer flash white between picks.
+- LookingGlass now shows more info on equipment cards.
+
+<details>
+<summary>Previous versions</summary>
+
+## 1.1.5
 
 - Fixed item picker and ESC menu conflicts. The picker should be hidden whenever the actual game menu is open and come back when you close it, respecting your pause settings.
 - Item rolls now use their own random seed based on the run seed, so they won't affect the game's other loot rolls.
 - Improved performance by reducing unnecessary recalculations when generating item options.
-
-<details>
-<summary>Previous versions</summary>
 
 ## 1.1.4
 
@@ -83,6 +99,7 @@ Each player has fully independent state — their own item options, their own ba
 ## 1.1.0
 
 - Fixed a bug where some items weren't being disabled even though "remove interractables" option is set.
+
 ## 1.0.9
 
 - Removed all types of "Scrap"s from the drop table, unless the player is using the Drifter character.
@@ -140,4 +157,5 @@ Each player has fully independent state — their own item options, their own ba
 ## 1.0.0
 
 - First release
+
 </details>

@@ -25,7 +25,7 @@ namespace LevelUpChoices
         public const string PluginGUID = PluginAuthor + "." + PluginName;
         public const string PluginAuthor = "karaeren";
         public const string PluginName = "LevelUpChoices";
-        public const string PluginVersion = "1.1.5";
+        public const string PluginVersion = "1.2.0";
 
         public void Awake()
         {
