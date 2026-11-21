@@ -1,18 +1,14 @@
-using LevelUpChoices.UI;
 using LevelUpChoices.UI.Constants;
 using LevelUpChoices.UI.Services;
 using RoR2.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LevelUpChoices.UI.Builders
 {
-    public class ButtonBuilder(UIAssetService assetService)
+    public class ButtonBuilder
     {
-        private readonly UIAssetService _assetService = assetService;
-
         public GameObject CreateAbsoluteButton(
             Transform parent,
             string label,
@@ -72,10 +68,7 @@ namespace LevelUpChoices.UI.Builders
             r.offsetMin = new Vector2(0f, 2f);
             r.offsetMax = new Vector2(0f, -2f);
 
-            var trigger = go.AddComponent<EventTrigger>();
-            var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            enterEntry.callback.AddListener(_ => UISoundManager.PlayHover());
-            trigger.triggers.Add(enterEntry);
+            UISoundManager.AddHoverSound(go);
 
             return go;
         }

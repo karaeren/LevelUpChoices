@@ -303,42 +303,31 @@ namespace LevelUpChoices
             return master.luck;
         }
 
-        public void HandlePlayerBanish(NetworkInstanceId netId, int slotIndex)
+        public void HandlePlayerBanish(NetworkInstanceId netId, int slotIndex) =>
+            ReplacePlayerOption(netId, slotIndex, banish: true);
+
+        public void HandlePlayerReroll(NetworkInstanceId netId, int slotIndex) =>
+            ReplacePlayerOption(netId, slotIndex, banish: false);
+
+        private void ReplacePlayerOption(NetworkInstanceId netId, int slotIndex, bool banish)
         {
-            if (!NetworkServer.active)
-                return;
-            if (!playerStates.TryGetValue(netId, out var state))
+            if (!NetworkServer.active || !playerStates.TryGetValue(netId, out var state))
                 return;
 
-            if (state.BanishTokens <= 0 || state.SelectionTokens <= 0)
+            int tokens = banish ? state.BanishTokens : state.RerollTokens;
+            if (tokens <= 0 || state.SelectionTokens <= 0)
                 return;
             if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count)
                 return;
 
-            if (!TryReplaceOption(netId, state, slotIndex, true))
+            if (!TryReplaceOption(netId, state, slotIndex, banish))
                 return;
 
-            state.BanishTokens--;
-            SyncState(netId);
-            SyncOptions(netId);
-        }
+            if (banish)
+                state.BanishTokens--;
+            else
+                state.RerollTokens--;
 
-        public void HandlePlayerReroll(NetworkInstanceId netId, int slotIndex)
-        {
-            if (!NetworkServer.active)
-                return;
-            if (!playerStates.TryGetValue(netId, out var state))
-                return;
-
-            if (state.RerollTokens <= 0 || state.SelectionTokens <= 0)
-                return;
-            if (slotIndex < 0 || slotIndex >= state.CurrentOptions.Count)
-                return;
-
-            if (!TryReplaceOption(netId, state, slotIndex, false))
-                return;
-
-            state.RerollTokens--;
             SyncState(netId);
             SyncOptions(netId);
         }
@@ -551,8 +540,7 @@ namespace LevelUpChoices
             if (NetworkClient.active)
                 return;
 
-            var localUsers = NetworkUser.readOnlyLocalPlayersList;
-            if (localUsers.Count > 0 && localUsers[0].netId == netId)
+            if (Networking.IsLocalUser(netId))
             {
                 UpdateAvailableItems(state.CurrentOptions.ToList(), state.CurrentSynergies);
             }

@@ -6,7 +6,6 @@ using RoR2;
 using RoR2.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LevelUpChoices.UI.Builders
@@ -14,8 +13,8 @@ namespace LevelUpChoices.UI.Builders
     public class CardBuilder(UIAssetService assetService)
     {
         private readonly UIAssetService _assetService = assetService;
-        private readonly ButtonBuilder _buttonBuilder = new(assetService);
-        private readonly UIElementBuilder _elementBuilder = new(assetService);
+        private readonly ButtonBuilder _buttonBuilder = new();
+        private readonly UIElementBuilder _elementBuilder = new();
 
         public GameObject CreateCard(
             Transform parent,
@@ -46,13 +45,7 @@ namespace LevelUpChoices.UI.Builders
             var card = new GameObject($"Card_{slotIndex}");
             card.transform.SetParent(parent, false);
 
-            var cardImg = card.AddComponent<Image>();
-            if (_assetService.PanelSprite != null)
-            {
-                cardImg.sprite = _assetService.PanelSprite;
-                cardImg.type = Image.Type.Sliced;
-            }
-            cardImg.color = UIColors.CardBg;
+            var cardImg = _elementBuilder.AddPanel(card, UIColors.CardBg, _assetService.PanelSprite);
 
             var cardBtn = card.AddComponent<Button>();
             cardBtn.targetGraphic = cardImg;
@@ -64,10 +57,7 @@ namespace LevelUpChoices.UI.Builders
             cardBtn.colors = cardBtnColors;
             cardBtn.onClick.AddListener(() => onItemClicked?.Invoke(pickupIndex));
 
-            var hoverTrigger = card.AddComponent<EventTrigger>();
-            var hoverEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-            hoverEntry.callback.AddListener(_ => UISoundManager.PlayHover());
-            hoverTrigger.triggers.Add(hoverEntry);
+            UISoundManager.AddHoverSound(card);
 
             var cardLe = card.AddComponent<LayoutElement>();
             cardLe.preferredWidth = 0;

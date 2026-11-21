@@ -38,27 +38,14 @@ namespace LevelUpChoices.Artifacts
                 string onPath = System.IO.Path.Combine(_basePath, "Assets", "AoE_On.png");
                 string offPath = System.IO.Path.Combine(_basePath, "Assets", "AoE_Off.png");
 
-                ArtifactDef.smallIconSelectedSprite = LoadSprite(onPath);
-                ArtifactDef.smallIconDeselectedSprite = LoadSprite(offPath);
+                ArtifactDef.smallIconSelectedReference = ArtifactIcons.Load(onPath);
+                ArtifactDef.smallIconDeselectedReference = ArtifactIcons.Load(offPath);
             }
 
             contentPack.artifactDefs.Add([ArtifactDef]);
 
             args.ReportProgress(1f);
             yield break;
-        }
-
-        private static Sprite LoadSprite(string path)
-        {
-            if (System.IO.File.Exists(path))
-            {
-                byte[] bytes = System.IO.File.ReadAllBytes(path);
-                Texture2D tex = new(256, 256, TextureFormat.ARGB32, false, false);
-                tex.LoadImage(bytes);
-                tex.filterMode = FilterMode.Point;
-                return Sprite.Create(tex, new Rect(0f, 0f, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f, 1, SpriteMeshType.Tight, Vector4.zero, true);
-            }
-            return null;
         }
 
         public IEnumerator GenerateContentPackAsync(GetContentPackAsyncArgs args)
@@ -199,7 +186,7 @@ namespace LevelUpChoices.Artifacts
             GameObject inventoryPrefab = LegacyResourcesAPI.Load<GameObject>("Prefabs/NetworkedObjects/MonsterTeamGainsItemsArtifactInventory");
             if (inventoryPrefab)
             {
-                _monsterTeamInventory = UnityEngine.Object.Instantiate(inventoryPrefab).GetComponent<Inventory>();
+                _monsterTeamInventory = Object.Instantiate(inventoryPrefab).GetComponent<Inventory>();
                 _monsterTeamInventory.GetComponent<TeamFilter>().teamIndex = TeamIndex.Monster;
                 NetworkServer.Spawn(_monsterTeamInventory.gameObject);
             }

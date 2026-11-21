@@ -94,21 +94,18 @@ namespace LevelUpChoices
             {
                 foreach (var term in tokens.Distinct())
                 {
-                    if (documentFrequency.ContainsKey(term))
-                        documentFrequency[term]++;
-                    else
-                        documentFrequency[term] = 1;
+                    documentFrequency[term] = documentFrequency.GetValueOrDefault(term) + 1;
                 }
             }
 
-            int N = validItems.Count;
+            int itemCount = validItems.Count;
             var idf = new Dictionary<string, double>();
             foreach (var kvp in documentFrequency)
             {
-                idf[kvp.Key] = Math.Log((double)N / kvp.Value) + 1;
+                idf[kvp.Key] = Math.Log((double)itemCount / kvp.Value) + 1;
             }
 
-            var tfIdfVectors = new Dictionary<ItemIndex, Dictionary<string, double>>();
+            var tfIdfVectors = new Dictionary<ItemIndex, (Dictionary<string, double> Terms, double Norm)>();
             foreach (var kvp in itemTokens)
             {
                 var itemIndex = kvp.Key;
@@ -117,23 +114,26 @@ namespace LevelUpChoices
 
                 var termCounts = tokens.GroupBy(t => t).ToDictionary(g => g.Key, g => g.Count());
                 int totalTerms = tokens.Count;
+                double sumOfSquares = 0;
 
                 foreach (var termKvp in termCounts)
                 {
                     string term = termKvp.Key;
                     int count = termKvp.Value;
                     double tf = (double)count / totalTerms;
-                    tfIdf[term] = tf * idf[term];
+                    double weight = tf * idf[term];
+                    tfIdf[term] = weight;
+                    sumOfSquares += weight * weight;
                 }
 
-                tfIdfVectors[itemIndex] = tfIdf;
+                tfIdfVectors[itemIndex] = (tfIdf, Math.Sqrt(sumOfSquares));
             }
 
             double similarityThreshold = ModConfig.SimilarityThreshold.Value;
 
             foreach (var item in validItems)
             {
-                var vecA = tfIdfVectors[item.itemIndex];
+                var (terms, norm) = tfIdfVectors[item.itemIndex];
                 var similarities = new List<(ItemIndex OtherItem, double Score)>();
 
                 foreach (var otherItem in validItems)
@@ -141,31 +141,20 @@ namespace LevelUpChoices
                     if (item.itemIndex == otherItem.itemIndex)
                         continue;
 
-                    var vecB = tfIdfVectors[otherItem.itemIndex];
-                    double dotProduct = 0;
-                    double normA = 0;
-                    double normB = 0;
-
-                    foreach (var kvp in vecA)
-                        normA += kvp.Value * kvp.Value;
-                    foreach (var kvp in vecB)
-                        normB += kvp.Value * kvp.Value;
-
-                    normA = Math.Sqrt(normA);
-                    normB = Math.Sqrt(normB);
-
-                    if (normA == 0 || normB == 0)
+                    var (otherTerms, otherNorm) = tfIdfVectors[otherItem.itemIndex];
+                    if (norm == 0 || otherNorm == 0)
                         continue;
 
-                    foreach (var kvp in vecA)
+                    double dotProduct = 0;
+                    foreach (var kvp in terms)
                     {
-                        if (vecB.TryGetValue(kvp.Key, out double valB))
+                        if (otherTerms.TryGetValue(kvp.Key, out double otherWeight))
                         {
-                            dotProduct += kvp.Value * valB;
+                            dotProduct += kvp.Value * otherWeight;
                         }
                     }
 
-                    double cosineSim = dotProduct / (normA * normB);
+                    double cosineSim = dotProduct / (norm * otherNorm);
                     similarities.Add((otherItem.itemIndex, cosineSim));
                 }
 

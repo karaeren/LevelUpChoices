@@ -1,17 +1,34 @@
 root = true
+
+[*]
 end_of_line = lf
 
 [*.cs]
 indent_style = space
 indent_size = 4
 tab_width = 4
-end_of_line = lf
 insert_final_newline = true
 
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 csharp_preserve_single_line_statements = false
 csharp_preserve_single_line_blocks = true
+
+# Unnecessary name qualifiers, member qualifiers, and casts
+dotnet_diagnostic.IDE0001.severity = suggestion
+dotnet_diagnostic.IDE0002.severity = suggestion
+dotnet_diagnostic.IDE0004.severity = suggestion
+
+# Unused using directives and fields that can be readonly
+dotnet_diagnostic.IDE0005.severity = suggestion
+dotnet_diagnostic.IDE0044.severity = suggestion
+
+# Check unused parameters on non-public methods.
+dotnet_code_quality_unused_parameters = non_public
+dotnet_diagnostic.IDE0060.severity = warning
+
+# Prefer a single lookup over ContainsKey followed by an indexer read.
+dotnet_diagnostic.CA1854.severity = warning
 
 # Copied rest of the config from https://raw.githubusercontent.com/Wet-Boys/LookingGlass/refs/heads/main/.editorconfig
 
@@ -39,7 +56,6 @@ csharp_prefer_system_threading_lock = true:suggestion
 dotnet_style_operator_placement_when_wrapping = beginning_of_line
 tab_width = 4
 indent_size = 4
-end_of_line = crlf
 dotnet_style_coalesce_expression = true:suggestion
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion

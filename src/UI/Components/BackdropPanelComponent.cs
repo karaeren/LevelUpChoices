@@ -1,4 +1,3 @@
-using LevelUpChoices.UI.Constants;
 using UnityEngine;
 
 namespace LevelUpChoices.UI.Components

@@ -29,7 +29,6 @@ namespace LevelUpChoices
             var prefixToRemove = $"{className}.{memberName}()";
 
             if (dataStr.StartsWith(prefixToRemove))
-
             {
                 dataStr = dataStr[prefixToRemove.Length..].TrimStart(':', '-', ' ');
             }

@@ -1,6 +1,5 @@
 using LevelUpChoices.UI.Builders;
 using LevelUpChoices.UI.Constants;
-using RoR2.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +13,7 @@ namespace LevelUpChoices.UI.Components
             var container = new GameObject("TitleBarContainer");
             container.transform.SetParent(parent, false);
 
-            elementBuilder.AddPanel(container, UIColors.TitleBarBg, true, null);
+            elementBuilder.AddPanel(container, UIColors.TitleBarBg);
             elementBuilder.AddVerticalLayout(container, new RectOffset(0, 0, 0, 0), 0f, false, true, false, true);
 
             var le = container.AddComponent<LayoutElement>();

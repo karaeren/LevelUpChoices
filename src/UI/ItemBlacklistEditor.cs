@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using LevelUpChoices.UI.Builders;
 using LevelUpChoices.UI.Constants;
-using LevelUpChoices.UI.Services;
 using RoR2;
 using RoR2.UI;
 using TMPro;
@@ -21,7 +20,7 @@ namespace LevelUpChoices.UI
         private const float RowSpacing = 4f;
         private static SimpleDialogBox _dialog;
 
-        private readonly UIElementBuilder _ui = new(UIAssetService.Instance);
+        private readonly UIElementBuilder _ui = new();
         private readonly HashSet<string> _blocked = new(ModConfig.ParseItemBlacklist(ModConfig.ItemBlacklist.Value), StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _items = new(StringComparer.OrdinalIgnoreCase);
         private readonly TMP_InputField _search;
@@ -96,7 +95,7 @@ namespace LevelUpChoices.UI
             var field = CreateObject("ItemSearch", parent);
             SetHeight(field, 40f);
             field.AddComponent<MPEventSystemLocator>();
-            var background = _ui.AddPanel(field, UIColors.TitleBarBg, false, null);
+            var background = _ui.AddPanel(field, UIColors.TitleBarBg);
 
             var viewport = CreateObject("TextViewport", field.transform);
             Stretch((RectTransform)viewport.transform, new Vector2(10f, 3f), new Vector2(-10f, -3f));
@@ -134,7 +133,7 @@ namespace LevelUpChoices.UI
         {
             var list = CreateObject("BlockedList", parent);
             list.AddComponent<UnityEngine.UI.LayoutElement>().flexibleHeight = 1f;
-            _ui.AddPanel(list, UIColors.HeaderBg, false, null);
+            _ui.AddPanel(list, UIColors.HeaderBg);
             var viewport = CreateObject("Viewport", list.transform);
             var viewportRect = (RectTransform)viewport.transform;
             Stretch(viewportRect, Vector2.zero, Vector2.zero);
@@ -245,7 +244,7 @@ namespace LevelUpChoices.UI
             var row = CreateObject("ItemRow", parent);
             SetHeight(row, RowHeight);
             var button = row.AddComponent<MPButton>();
-            button.targetGraphic = _ui.AddPanel(row, Color.white, false, null);
+            button.targetGraphic = _ui.AddPanel(row, Color.white);
             var colors = button.colors;
             colors.normalColor = new Color(0.16f, 0.18f, 0.24f);
             colors.highlightedColor = colors.selectedColor = new Color(0.32f, 0.37f, 0.46f);

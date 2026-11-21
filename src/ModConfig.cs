@@ -86,7 +86,7 @@ namespace LevelUpChoices
             _enableCustomLevelSystemOverride = null;
         }
 
-        public static event System.Action OnServerConfigSynced;
+        public static event Action OnServerConfigSynced;
 
         public static ConfigEntry<int> ItemChoiceCount { get; private set; }
         public static ConfigEntry<int> LevelsPerBanishToken { get; private set; }
@@ -256,7 +256,7 @@ namespace LevelUpChoices
                     ModSettingsManager.SetModIcon(icon);
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Log.Warning($"Failed to load mod icon: {e.Message}");
             }

@@ -3,11 +3,10 @@
    "tasks": [
       {
          "name": "dotnet-format-check",
-         "command": "dotnet",
+         "command": "sh",
          "args": [
-            "format",
-            "LevelUpChoices.sln",
-            "--verify-no-changes"
+            "format.sh",
+            "--check"
          ]
       }
    ]

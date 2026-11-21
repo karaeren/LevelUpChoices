@@ -1,5 +1,6 @@
-using LevelUpChoices.UI.Constants;
 using RoR2;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace LevelUpChoices.UI.Services
 {
@@ -7,6 +8,14 @@ namespace LevelUpChoices.UI.Services
     {
         public const string HoverSoundName = "Play_UI_menuHover";
         public const string ClickSoundName = "Play_UI_menuClick";
+
+        internal static void AddHoverSound(GameObject gameObject)
+        {
+            var trigger = gameObject.AddComponent<EventTrigger>();
+            var entry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            entry.callback.AddListener(_ => PlayHover());
+            trigger.triggers.Add(entry);
+        }
 
         public static void PlayHover()
         {

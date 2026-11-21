@@ -1,16 +1,12 @@
-using LevelUpChoices.UI.Services;
 using RoR2.UI;
 using TMPro;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace LevelUpChoices.UI.Builders
 {
-    public class UIElementBuilder(UIAssetService assetService)
+    public class UIElementBuilder
     {
-        private readonly UIAssetService _assetService = assetService;
-
         public HGTextMeshProUGUI MakeLabel(
             Transform parent,
             string text,
@@ -36,33 +32,17 @@ namespace LevelUpChoices.UI.Builders
             return textComponent;
         }
 
-        public Image AddPanel(GameObject gameObject, Color color, bool sliced, Sprite sprite)
+        public Image AddPanel(GameObject gameObject, Color color, Sprite slicedSprite = null)
         {
             var image = gameObject.AddComponent<Image>();
             image.color = color;
-            image.type = (sliced && sprite != null) ? Image.Type.Sliced : Image.Type.Simple;
-            if (sprite != null)
-                image.sprite = sprite;
+            if (slicedSprite != null)
+            {
+                image.sprite = slicedSprite;
+                image.type = Image.Type.Sliced;
+            }
 
             return image;
-        }
-
-        public void AddButtonSound(Button btn)
-        {
-            var eventTrigger = btn.gameObject.AddComponent<EventTrigger>();
-
-            var hoverEntry = new EventTrigger.Entry
-            {
-                eventID = EventTriggerType.PointerEnter
-            };
-            hoverEntry.callback.AddListener(_ => UISoundManager.PlayHover());
-
-            var clickEntry = new EventTrigger.Entry
-            {
-                eventID = EventTriggerType.PointerClick
-            };
-            clickEntry.callback.AddListener(_ => UISoundManager.PlayClick());
-
         }
 
         public LayoutElement MakeSpacer(Transform parent, string name, float minHeight, float preferredHeight, float flexibleHeight)

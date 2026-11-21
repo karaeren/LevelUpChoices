@@ -1,8 +1,5 @@
 using System;
-using System.Collections.ObjectModel;
 using System.Reflection;
-using BepInEx;
-using R2API.Networking;
 using R2API.Networking.Interfaces;
 using RoR2;
 using UnityEngine;
@@ -20,7 +17,6 @@ namespace LevelUpChoices
         private uint customNaturalLevelCap;
         private ulong customHardExpCap;
 
-        private int lastMaxLevel = -1;
         private bool lastEnableCustomLevelSystem = false;
         private bool lastEnableMonsterLevelScaling = false;
 
@@ -156,7 +152,6 @@ namespace LevelUpChoices
 
             lastEnableCustomLevelSystem = enableCustomLevelSystem;
             lastEnableMonsterLevelScaling = enableMonsterLevelScaling;
-            lastMaxLevel = MaxLevel;
 
             SyncConfigAsServer();
         }
@@ -168,7 +163,7 @@ namespace LevelUpChoices
 
             if (ModConfig.EnableMonsterLevelScalingValue && ModConfig.IsModEnabled)
             {
-                float scaleFactor = (float)ModConfig.MaxLevelValue / 94f; // Vanilla max level is 94
+                float scaleFactor = ModConfig.MaxLevelValue / 94f; // Vanilla max level is 94
                 int ambientFloor = Run.instance.ambientLevelFloor;
                 int scaledAmbient = Mathf.FloorToInt(ambientFloor * scaleFactor);
                 return Mathf.Min(scaledAmbient, ModConfig.MaxLevelValue);
@@ -212,7 +207,7 @@ namespace LevelUpChoices
             if (maxLevel < 2)
                 return 1.0;
 
-            double target = (double)ulong.MaxValue - XP_BUFFER;
+            double target = ulong.MaxValue - XP_BUFFER;
             double low = SEARCH_LOW;
             double high = SEARCH_HIGH;
             double mid = 0;
@@ -261,9 +256,9 @@ namespace LevelUpChoices
                     stepMultiplier *= multiplier;
                     cumulative += step;
 
-                    if (cumulative >= (double)ulong.MaxValue)
+                    if (cumulative >= ulong.MaxValue)
                     {
-                        cumulative = (double)ulong.MaxValue;
+                        cumulative = ulong.MaxValue;
                         xp = ulong.MaxValue;
                         maxed = true;
                     }

@@ -36,18 +36,22 @@ namespace LevelUpChoices
             _tierCounts.Clear();
             _lastCalculatedTokens = -1;
 
+            var run = Run.instance;
             foreach (var index in ItemCatalog.allItems)
             {
-                string skipReason = null;
                 var def = ItemCatalog.GetItemDef(index);
-
                 if (def == null)
-                    skipReason = "DEF_NULL";
+                {
+                    Log.Debug($"Skipping {index} - DEF_NULL");
+                    continue;
+                }
+
+                string skipReason = null;
                 if (def.hidden)
                     skipReason = "HIDDEN";
-                if (def.tags.Contains(ItemTag.IgnoreForDropList))
+                if (def.ContainsTag(ItemTag.IgnoreForDropList))
                     skipReason = "IGNORE_FOR_DROP_LIST";
-                if (!enableScraps && (def.tags.Contains(ItemTag.Scrap) || def.tags.Contains(ItemTag.PriorityScrap)))
+                if (!enableScraps && (def.ContainsTag(ItemTag.Scrap) || def.ContainsTag(ItemTag.PriorityScrap)))
                     skipReason = "SCRAP_ON_NON_DRIFTER";
                 if (BannedItemNames.Contains(def.name) || ModConfig.IsItemBlacklisted(def.name))
                     skipReason = "BANNED";
@@ -61,41 +65,27 @@ namespace LevelUpChoices
                 if (PickupCatalog.FindPickupIndex(index) == PickupIndex.none)
                     skipReason = "NO_PICKUP_INDEX";
 
-                bool runAvailable = false;
-                bool runExists = false;
-                try
-                {
-                    if (Run.instance != null)
-                    {
-                        runExists = true;
-                        runAvailable = Run.instance.availableItems.Contains(index);
-                    }
-                }
-                catch { /* Run may not be active */ }
-
                 if (ModConfig.EnableInteractableRemoval.Value && def.name is
                     "TreasureCache" or "TreasureCacheVoid" or "FreeChest" or "ExtraShrineItem"
                     or "LowerPricedChests" or "MultiShopCard" or "PrimalBirthright"
                     or "ITEM_SANDSWEPT_HALLOWED_ICHOR" or "ITEM_SANDSWEPT_SEQUENCED_FATE" or "ITEM_SANDSWEPT_UNIVERSAL_VIP_PASS")
                     skipReason = "INTERACTABLE_REMOVAL_ENABLED";
 
-                if (!runExists)
+                if (!run)
                     skipReason = "RUN_INSTANCE_NULL";
-                else if (!runAvailable)
+                else if (run.availableItems?.Contains(index) != true)
                     skipReason = "NOT_AVAILABLE_IN_RUN";
 
                 if (skipReason != null)
                 {
-                    Log.Debug($"Skipping {def?.name ?? index.ToString()} - {skipReason}");
+                    Log.Debug($"Skipping {def.name ?? index.ToString()} - {skipReason}");
                     continue;
                 }
 
                 _tiers[index] = def.tier;
                 _weights[index] = 0f; // assigned properly in RecalculateWeights
 
-                if (!_tierCounts.ContainsKey(def.tier))
-                    _tierCounts[def.tier] = 0;
-                _tierCounts[def.tier]++;
+                _tierCounts[def.tier] = _tierCounts.GetValueOrDefault(def.tier) + 1;
             }
 
             RecalculateWeights(0);
@@ -163,59 +153,22 @@ namespace LevelUpChoices
 
         public bool HasEligibleItems(ICollection<ItemIndex> exclude = null)
         {
-            return _weights.Any(kv => kv.Value > 0f && (exclude == null || !exclude.Contains(kv.Key)));
+            return _weights.Any(item => IsEligible(item, exclude));
         }
 
         public ItemIndex Roll(Xoroshiro128Plus rng, float luck = 0f, ICollection<ItemIndex> exclude = null)
         {
-            int extraRolls = Mathf.FloorToInt(Mathf.Abs(luck));
-            if (rng.nextNormalizedFloat < Mathf.Abs(luck) - extraRolls)
-            {
+            float absoluteLuck = Mathf.Abs(luck);
+            int extraRolls = Mathf.FloorToInt(absoluteLuck);
+            if (rng.nextNormalizedFloat < absoluteLuck - extraRolls)
                 extraRolls++;
-            }
             int rolls = 1 + extraRolls;
 
-            ItemIndex bestResult = ItemIndex.None;
-            int bestTierValue = luck >= 0 ? int.MinValue : int.MaxValue;
-
-            for (int i = 0; i < rolls; i++)
-            {
-                ItemIndex roll = RollSingle(rng, exclude);
-                if (roll == ItemIndex.None)
-                    continue;
-
-                int tierValue = GetTierValue(_tiers[roll]);
-
-                if (luck >= 0)
-                {
-                    if (tierValue > bestTierValue)
-                    {
-                        bestTierValue = tierValue;
-                        bestResult = roll;
-                    }
-                }
-                else
-                {
-                    if (tierValue < bestTierValue)
-                    {
-                        bestTierValue = tierValue;
-                        bestResult = roll;
-                    }
-                }
-            }
-
-            return bestResult != ItemIndex.None ? bestResult : RollSingle(rng, exclude);
-        }
-
-        private ItemIndex RollSingle(Xoroshiro128Plus rng, ICollection<ItemIndex> exclude = null)
-        {
-            // Compute total weight of eligible items
             float total = 0f;
-            foreach (var kv in _weights)
+            foreach (var item in _weights)
             {
-                if (exclude != null && exclude.Contains(kv.Key))
-                    continue;
-                total += kv.Value;
+                if (IsEligible(item, exclude))
+                    total += item.Value;
             }
 
             if (total <= 0f)
@@ -224,13 +177,39 @@ namespace LevelUpChoices
                 return ItemIndex.None;
             }
 
+            bool preferHigherTier = luck >= 0f;
+            ItemIndex bestResult = ItemIndex.None;
+            int bestTierValue = preferHigherTier ? int.MinValue : int.MaxValue;
+
+            for (int i = 0; i < rolls; i++)
+            {
+                ItemIndex roll = RollSingle(rng, total, exclude);
+                int tierValue = GetTierValue(_tiers[roll]);
+
+                if (preferHigherTier ? tierValue > bestTierValue : tierValue < bestTierValue)
+                {
+                    bestTierValue = tierValue;
+                    bestResult = roll;
+                }
+            }
+
+            return bestResult != ItemIndex.None ? bestResult : RollSingle(rng, total, exclude);
+        }
+
+        private static bool IsEligible(KeyValuePair<ItemIndex, float> item, ICollection<ItemIndex> exclude)
+        {
+            return item.Value > 0f && (exclude == null || !exclude.Contains(item.Key));
+        }
+
+        private ItemIndex RollSingle(Xoroshiro128Plus rng, float total, ICollection<ItemIndex> exclude)
+        {
             float roll = rng.nextNormalizedFloat * total;
             float cumulative = 0f;
             ItemIndex last = ItemIndex.None;
 
             foreach (var kv in _weights)
             {
-                if (exclude != null && exclude.Contains(kv.Key))
+                if (!IsEligible(kv, exclude))
                     continue;
                 cumulative += kv.Value;
                 last = kv.Key;

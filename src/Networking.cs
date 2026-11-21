@@ -7,6 +7,22 @@ namespace LevelUpChoices
 {
     public class Networking
     {
+        internal static bool TryGetLocalUserId(out NetworkInstanceId netId)
+        {
+            var localUsers = NetworkUser.readOnlyLocalPlayersList;
+            if (localUsers.Count == 0)
+            {
+                netId = default;
+                return false;
+            }
+
+            netId = localUsers[0].netId;
+            return true;
+        }
+
+        internal static bool IsLocalUser(NetworkInstanceId netId) =>
+            TryGetLocalUserId(out var localNetId) && localNetId == netId;
+
         public class SyncPlayerState : INetMessage
         {
             NetworkInstanceId targetNetId;
@@ -41,7 +57,7 @@ namespace LevelUpChoices
 
             public void OnReceived()
             {
-                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == targetNetId)
+                if (IsLocalUser(targetNetId))
                 {
                     LevelUpManager.Instance.UpdatePlayerState(selectionTokens, banishTokens, rerollTokens);
                 }
@@ -88,7 +104,7 @@ namespace LevelUpChoices
 
             public void OnReceived()
             {
-                if (RoR2.NetworkUser.readOnlyLocalPlayersList.Count > 0 && RoR2.NetworkUser.readOnlyLocalPlayersList[0].netId == targetNetId)
+                if (IsLocalUser(targetNetId))
                 {
                     LevelUpManager.Instance.UpdateAvailableItems(pickupIndices, synergizedItems);
                 }

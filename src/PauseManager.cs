@@ -14,7 +14,6 @@ namespace LevelUpChoices
     {
         private static float savedTimeScale = 1f;
         private static bool pausedByUs = false;
-        public static bool IsPausedByUs => pausedByUs;
 
         private static readonly HashSet<NetworkInstanceId> activePickers = [];
 
@@ -46,10 +45,9 @@ namespace LevelUpChoices
             else
             {
                 // Tell the server we're picking — the server decides when to pause/unpause
-                var localUser = NetworkUser.readOnlyLocalPlayersList;
-                if (localUser.Count > 0)
+                if (Networking.TryGetLocalUserId(out var netId))
                 {
-                    new Networking.SendPickingState(localUser[0].netId, true)
+                    new Networking.SendPickingState(netId, true)
                         .Send(R2API.Networking.NetworkDestination.Server);
                 }
                 pausedByUs = true;
@@ -68,10 +66,9 @@ namespace LevelUpChoices
             else
             {
                 // Tell the server we're done — server unpauses when all pickers are done
-                var localUser = NetworkUser.readOnlyLocalPlayersList;
-                if (localUser.Count > 0)
+                if (Networking.TryGetLocalUserId(out var netId))
                 {
-                    new Networking.SendPickingState(localUser[0].netId, false)
+                    new Networking.SendPickingState(netId, false)
                         .Send(R2API.Networking.NetworkDestination.Server);
                 }
             }
@@ -118,18 +115,6 @@ namespace LevelUpChoices
             }
             // 1+ → 0 pickers → unpause
             else if (previousCount > 0 && currentCount == 0)
-            {
-                ServerUnpause();
-            }
-        }
-
-        // Server-only. Remove a player from the active pickers (e.g. on disconnect).
-        public static void RemovePicker(NetworkInstanceId netId)
-        {
-            if (!NetworkServer.active)
-                return;
-
-            if (activePickers.Remove(netId) && activePickers.Count == 0)
             {
                 ServerUnpause();
             }

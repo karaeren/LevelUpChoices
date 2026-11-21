@@ -1,6 +1,4 @@
-using LevelUpChoices.UI.Constants;
 using RoR2.UI;
-using TMPro;
 using UnityEngine;
 
 namespace LevelUpChoices.UI.Components
@@ -42,7 +40,5 @@ namespace LevelUpChoices.UI.Components
                 _panel.SetActive(false);
             }
         }
-
-        public bool IsVisible => _panel != null && _panel.activeSelf;
     }
 }

@@ -62,7 +62,7 @@ namespace LevelUpChoices
 
                 // ========== METADATA ==========
                 sb.AppendLine("  \"_metadata\": {");
-                sb.AppendLine($"    \"dumpTime\": \"{Esc(System.DateTime.UtcNow.ToString("o"))}\",");
+                sb.AppendLine($"    \"dumpTime\": \"{Esc(DateTime.UtcNow.ToString("o"))}\",");
                 sb.AppendLine($"    \"itemCatalogCount\": {ItemCatalog.itemCount},");
                 sb.AppendLine($"    \"pickupCatalogCount\": {PickupCatalog.pickupCount},");
                 sb.AppendLine($"    \"equipmentCatalogCount\": {EquipmentCatalog.equipmentCount}");
@@ -169,7 +169,8 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"tagsArray\": [{(def.tags != null ? string.Join(", ", def.tags.Select(t => $"\"{t}\"")) : "")}],");
 
                     // --- Prefabs / model paths ---
-                    sb.AppendLine($"      \"pickupIconSprite\": \"{Esc(def.pickupIconSprite != null ? def.pickupIconSprite.name : "null")}\",");
+                    var icon = def.GetIcon();
+                    sb.AppendLine($"      \"pickupIconSprite\": \"{Esc(icon != null ? icon.name : "null")}\",");
 
                     // --- Unlock / Expansion ---
                     sb.AppendLine($"      \"unlockableDef\": \"{Esc(def.unlockableDef != null ? def.unlockableDef.cachedName : "null")}\",");
@@ -303,7 +304,8 @@ namespace LevelUpChoices
                     sb.AppendLine($"      \"colorIndex\": \"{edef.colorIndex}\",");
                     sb.AppendLine($"      \"dropOnDeathChance\": {edef.dropOnDeathChance},");
                     sb.AppendLine($"      \"passiveBuffDef\": \"{Esc(edef.passiveBuffDef != null ? edef.passiveBuffDef.name : "null")}\",");
-                    sb.AppendLine($"      \"pickupIconSprite\": \"{Esc(edef.pickupIconSprite != null ? edef.pickupIconSprite.name : "null")}\",");
+                    var icon = edef.GetIcon();
+                    sb.AppendLine($"      \"pickupIconSprite\": \"{Esc(icon != null ? icon.name : "null")}\",");
                     sb.AppendLine($"      \"unlockableDef\": \"{Esc(edef.unlockableDef != null ? edef.unlockableDef.cachedName : "null")}\",");
                     sb.AppendLine($"      \"requiredExpansion\": \"{Esc(edef.requiredExpansion != null ? edef.requiredExpansion.name : "null")}\",");
 
@@ -328,7 +330,7 @@ namespace LevelUpChoices
                 File.WriteAllText(path, sb.ToString());
                 Log.Info($"Item dump written to {path}");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Log.Error(e);
             }

@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using LevelUpChoices.Extensions;
 using LevelUpChoices.UI.Builders;
 using LevelUpChoices.UI.Components;
 using LevelUpChoices.UI.Constants;
@@ -48,7 +47,7 @@ namespace LevelUpChoices.UI
             Instance = this;
 
             assetService = UIAssetService.Instance;
-            elementBuilder = new UIElementBuilder(assetService);
+            elementBuilder = new UIElementBuilder();
             cardBuilder = new CardBuilder(assetService);
 
             BuildUI();
@@ -90,7 +89,7 @@ namespace LevelUpChoices.UI
                 new Vector2(1560f, 0f), Vector2.zero);
             containerObject.AddComponent<CursorOpener>();
 
-            elementBuilder.AddPanel(containerObject, UIColors.DarkPanelBg, true, assetService.PanelSprite);
+            elementBuilder.AddPanel(containerObject, UIColors.DarkPanelBg, assetService.PanelSprite);
 
             elementBuilder.AddVerticalLayout(containerObject, new RectOffset(0, 0, 0, 0), 0f, false, true, false, true);
             containerObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
@@ -103,7 +102,7 @@ namespace LevelUpChoices.UI
             // Token header overlay (Top-Left of TitleBar)
             var headerGo = elementBuilder.MakeUIObject("TokenHeader", titleBarInner,
                 new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(12f, 0f));
-            elementBuilder.AddPanel(headerGo, new Color(0, 0, 0, 0.6f), false, null);
+            elementBuilder.AddPanel(headerGo, new Color(0, 0, 0, 0.6f));
 
             var hLayout = elementBuilder.AddHorizontalLayout(headerGo, new RectOffset(16, 16, 6, 6), 24f, true, true, false, false);
             hLayout.childAlignment = TextAnchor.MiddleLeft;
@@ -134,7 +133,7 @@ namespace LevelUpChoices.UI
 
             equipmentActions = elementBuilder.MakeUIObject("EquipmentActions", containerObject.transform,
                 Vector2.zero, Vector2.zero, new Vector2(0.5f, 0.5f), new Vector2(0f, 56f), Vector2.zero);
-            new ButtonBuilder(assetService).CreateAbsoluteButton(equipmentActions.transform, "Choose Item Instead",
+            new ButtonBuilder().CreateAbsoluteButton(equipmentActions.transform, "Choose Item Instead",
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(-122f, 12f), new Vector2(122f, 0f),
                 UIColors.RerollBg, UIColors.RerollAccent, OnChooseItemInsteadClicked);
             equipmentActions.SetActive(false);
@@ -146,7 +145,7 @@ namespace LevelUpChoices.UI
                 new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
                 new Vector2(280f, 68f), new Vector2(0f, 28f));
 
-            elementBuilder.AddPanel(notifPanel, UIColors.NotificationBg, true, null);
+            elementBuilder.AddPanel(notifPanel, UIColors.NotificationBg);
 
             var notifInner = elementBuilder.MakeUIObject("NotifInner", notifPanel.transform,
                 Vector2.zero, Vector2.one, new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.zero);
@@ -259,14 +258,6 @@ namespace LevelUpChoices.UI
             backdrop?.Hide();
         }
 
-        public void ShowNotification()
-        {
-            if (!ModConfig.EnableNotifications.Value)
-                return;
-            string keyName = ModConfig.ToggleMenuKey.Value.MainKey.ToString();
-            notification?.Show(LevelUpManager.Instance.AvailableTokens, keyName);
-        }
-
         private void Update()
         {
             bool isGamePaused = (pauseIntegration != null && pauseIntegration.IsPaused) || Time.timeScale == 0f;
@@ -297,10 +288,8 @@ namespace LevelUpChoices.UI
             if (!LevelUpManager.Instance.SpendTokenLocal())
                 return;
 
-            var localUsers = NetworkUser.readOnlyLocalPlayersList;
-            if (localUsers.Count == 0)
+            if (!Networking.TryGetLocalUserId(out var netId))
                 return;
-            var netId = localUsers[0].netId;
 
             if (NetworkServer.active)
             {
@@ -315,13 +304,11 @@ namespace LevelUpChoices.UI
 
         private void OnChooseItemInsteadClicked()
         {
-            var localUsers = NetworkUser.readOnlyLocalPlayersList;
-            if (localUsers.Count == 0 || LevelUpManager.Instance.AvailableTokens <= 0 || Time.unscaledTime - lastClickTime < ClickCooldown)
+            if (!Networking.TryGetLocalUserId(out var netId) || LevelUpManager.Instance.AvailableTokens <= 0 || Time.unscaledTime - lastClickTime < ClickCooldown)
                 return;
 
             lastClickTime = Time.unscaledTime;
             UISoundManager.PlayClick();
-            var netId = localUsers[0].netId;
             if (NetworkServer.active)
                 LevelUpManager.Instance.HandleChooseItemInstead(netId);
             else
@@ -335,10 +322,8 @@ namespace LevelUpChoices.UI
 
             UISoundManager.PlayClick();
 
-            var localUsers = NetworkUser.readOnlyLocalPlayersList;
-            if (localUsers.Count == 0)
+            if (!Networking.TryGetLocalUserId(out var netId))
                 return;
-            var netId = localUsers[0].netId;
 
             if (NetworkServer.active)
             {
@@ -358,10 +343,8 @@ namespace LevelUpChoices.UI
 
             UISoundManager.PlayClick();
 
-            var localUsers = NetworkUser.readOnlyLocalPlayersList;
-            if (localUsers.Count == 0)
+            if (!Networking.TryGetLocalUserId(out var netId))
                 return;
-            var netId = localUsers[0].netId;
 
             if (NetworkServer.active)
             {
